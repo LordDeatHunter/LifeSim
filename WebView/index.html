@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Life Viewer</title>
+</head>
+<body>
+  <canvas id="view" width="500" height="500" style="border:1px solid"></canvas>
+  <script>
+    const socket = new WebSocket("ws://localhost:5000/ws");
+    const canvas = document.getElementById("view");
+    const ctx = canvas.getContext("2d");
+
+    socket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      for (const id in data) {
+        const { x, y } = data[id];
+        ctx.beginPath();
+        ctx.arc(x * 5, y * 5, 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    };
+  </script>
+</body>
+</html>
