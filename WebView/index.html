@@ -10,17 +10,50 @@
     const canvas = document.getElementById("view");
     const ctx = canvas.getContext("2d");
 
+    const entities = {};
+    const lerpDuration = 100;
+
+    const lerp = (a, b, t) => a + (b - a) * t;
+
     socket.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const now = performance.now();
 
       for (const id in data) {
         const { x, y } = data[id];
-        ctx.beginPath();
-        ctx.arc(x * 5, y * 5, 5, 0, Math.PI * 2);
-        ctx.fill();
+        if (!entities[id]) {
+          entities[id] = {
+            prev: { x, y },
+            curr: { x, y },
+            lastUpdate: now
+          };
+        } else {
+          entities[id].prev = entities[id].curr;
+          entities[id].curr = { x, y };
+          entities[id].lastUpdate = now;
+        }
       }
     };
+
+    const render = () => {
+      const now = performance.now();
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      for (const id in entities) {
+        const { prev, curr, lastUpdate } = entities[id];
+        const t = Math.min((now - lastUpdate) / lerpDuration, 1);
+        const x = lerp(prev.x, curr.x, t) * 5;
+        const y = lerp(prev.y, curr.y, t) * 5;
+
+        ctx.beginPath();
+        ctx.arc(x, y, 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      requestAnimationFrame(render);
+    }
+
+    requestAnimationFrame(render);
   </script>
 </body>
 </html>
