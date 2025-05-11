@@ -1,63 +1,81 @@
-using System.Text.Json;
-using System.Net.WebSockets;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Net.WebSockets;
+using System.Numerics;
+using System.Text.Json;
 using LifeSim.Entities;
+using LifeSim.World;
 
-var builder = WebApplication.CreateBuilder(args);
-var app = builder.Build();
+namespace LifeSim;
 
-var clients = new ConcurrentBag<WebSocket>();
-var rng = new Random();
-var entities = new Dictionary<int, Entity>();
-
-for (var i = 0; i < 500; i++)
-    entities[i] = new Animal(rng.Next(0, 1000), rng.Next(0, 1000));
-for (var i = 0; i < 100; i++)
-    entities[i] = new Food(rng.Next(0, 1000), rng.Next(0, 1000));
-
-app.UseWebSockets();
-app.Map("/ws", async context =>
+public static class Program
 {
-    if (!context.WebSockets.IsWebSocketRequest) return;
+    public static ConcurrentBag<WebSocket> Clients = new();
+    public static Random RNG = new();
+    public static Dictionary<int, Entity> Entities = new();
+    public static Dictionary<Vector2, Chunk> Chunks = new();
 
-    using var ws = await context.WebSockets.AcceptWebSocketAsync();
-    clients.Add(ws);
-
-    while (ws.State == WebSocketState.Open)
-        await Task.Delay(1000);
-});
-
-_ = Task.Run(async () =>
-{
-    var stopwatch = new Stopwatch();
-    stopwatch.Start();
-    var lastTicks = stopwatch.ElapsedTicks;
-    var tickFrequency = (float)Stopwatch.Frequency;
-
-    while (true)
+    public static void Main(string[] args)
     {
-        var currentTicks = stopwatch.ElapsedTicks;
-        var delta = (currentTicks - lastTicks) / tickFrequency;
-        lastTicks = currentTicks;
+        var builder = WebApplication.CreateBuilder(args);
+        var app = builder.Build();
 
-        foreach (var entity in entities.Keys.Select(id => entities[id]))
+        for (var i = 0; i < 8; i++)
+        for (var j = 0; j < 8; j++)
         {
-            entity.Update(delta);
+            var chunkPos = new Vector2(i, j);
+            Chunks[chunkPos] = new Chunk(chunkPos);
         }
 
-        var json = JsonSerializer.Serialize(entities);
-        var buffer = System.Text.Encoding.UTF8.GetBytes(json);
-        var segment = new ArraySegment<byte>(buffer);
+        for (var i = 0; i < 500; i++)
+            Entities[i] = new Animal(RNG.Next(0, 1024), RNG.Next(0, 1024));
+        for (var i = 0; i < 100; i++)
+            Entities[i] = new Food(RNG.Next(0, 1024), RNG.Next(0, 1024));
 
-        foreach (var client in clients.Where(c => c.State == WebSocketState.Open))
+        app.UseWebSockets();
+        app.Map("/ws", async context =>
         {
-            try { await client.SendAsync(segment, WebSocketMessageType.Text, true, CancellationToken.None); }
-            catch { /* dead client */ }
-        }
+            if (!context.WebSockets.IsWebSocketRequest) return;
 
-        await Task.Delay(100);
+            using var ws = await context.WebSockets.AcceptWebSocketAsync();
+            Clients.Add(ws);
+
+            while (ws.State == WebSocketState.Open)
+                await Task.Delay(1000);
+        });
+
+        _ = Task.Run(async () =>
+        {
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+            var lastTicks = stopwatch.ElapsedTicks;
+            var tickFrequency = (float)Stopwatch.Frequency;
+
+            while (true)
+            {
+                var currentTicks = stopwatch.ElapsedTicks;
+                var delta = (currentTicks - lastTicks) / tickFrequency;
+                lastTicks = currentTicks;
+
+                foreach (var entity in Entities.Keys.Select(id => Entities[id]))
+                {
+                    entity.Update(delta);
+                }
+
+                var json = JsonSerializer.Serialize(Entities);
+                var buffer = System.Text.Encoding.UTF8.GetBytes(json);
+                var segment = new ArraySegment<byte>(buffer);
+
+                foreach (var client in Clients.Where(c => c.State == WebSocketState.Open))
+                {
+                    try { await client.SendAsync(segment, WebSocketMessageType.Text, true, CancellationToken.None); }
+                    catch { /* dead client */ }
+                }
+
+                await Task.Delay(100);
+            }
+        });
+
+        app.Run("http://localhost:5000");
     }
-});
-
-app.Run("http://localhost:5000");
+}
