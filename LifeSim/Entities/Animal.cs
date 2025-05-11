@@ -3,28 +3,23 @@ using System.Numerics;
 
 namespace LifeSim.Entities;
 
-public class Animal(float x, float y) : Entity(x, y, Color.CornflowerBlue)
+public class Animal(Vector2 position) : Entity(position, Color.CornflowerBlue)
 {
     private const float Speed = 10f;
 
     public override void Update(float deltaTime)
     {
-        var prevPosition = new Vector2(X, Y);
+        var prevPosition = Position;
         var prevChunkPosition = prevPosition.ToChunkPosition();
 
         var nearestFood = FindNearestFood();
         if (nearestFood == null) return;
-        var foodPosition = new Vector2(nearestFood.X, nearestFood.Y);
-        var direction = Vector2.Normalize(foodPosition - prevPosition);
+        var direction = Vector2.Normalize(nearestFood.Position - prevPosition);
 
-        X += direction.X * Speed * deltaTime;
-        Y += direction.Y * Speed * deltaTime;
+        Position += direction * Speed * deltaTime;
+        Position = Position.Clamp(new Vector2(0, 0), new Vector2(1024, 1024));
 
-        X = Math.Clamp(X, 0, 1024);
-        Y = Math.Clamp(Y, 0, 1024);
-
-        var newPosition = new Vector2(X, Y);
-        var newChunkPosition = newPosition.ToChunkPosition();
+        var newChunkPosition = Position.ToChunkPosition();
 
         if (prevChunkPosition == newChunkPosition) return;
         Program.Chunks[prevChunkPosition].Entities.Remove(this);
@@ -36,11 +31,11 @@ public class Animal(float x, float y) : Entity(x, y, Color.CornflowerBlue)
         Food nearestFood = null;
         var nearestDistance = float.MaxValue;
 
-        var chunkPosition = new Vector2(X, Y).ToChunkPosition();
+        var chunkPosition = Position.ToChunkPosition();
 
         foreach (var food in Program.Chunks[chunkPosition].Entities.OfType<Food>())
         {
-            var distance = Vector2.Distance(new Vector2(X, Y), new Vector2(food.X, food.Y));
+            var distance = Vector2.Distance(Position, food.Position);
             if (distance >= nearestDistance) continue;
             nearestDistance = distance;
             nearestFood = food;

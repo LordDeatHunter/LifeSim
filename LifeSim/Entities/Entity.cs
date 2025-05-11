@@ -5,17 +5,13 @@ namespace LifeSim.Entities;
 
 public abstract class Entity
 {
-    public float X { get; set; }
-    public float Y { get; set; }
+    public Vector2 Position { get; set; }
     public Color Color { get; set; }
 
-    protected Entity(float x, float y, Color color)
+    protected Entity(Vector2 position, Color color)
     {
-        X = x;
-        Y = y;
+        Position = position;
         Color = color;
-
-        var position = new Vector2(x, y);
         Program.Chunks[position.ToChunkPosition()].Entities.Add(this);
     }
 

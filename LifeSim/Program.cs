@@ -1,8 +1,10 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Drawing;
 using System.Net.WebSockets;
 using System.Numerics;
 using System.Text.Json;
+using LifeSim.Data;
 using LifeSim.Entities;
 using LifeSim.World;
 
@@ -28,9 +30,9 @@ public static class Program
         }
 
         for (var i = 0; i < 500; i++)
-            Entities[i] = new Animal(RNG.Next(0, 1024), RNG.Next(0, 1024));
-        for (var i = 0; i < 100; i++)
-            Entities[i] = new Food(RNG.Next(0, 1024), RNG.Next(0, 1024));
+            Entities[i] = new Animal(new Vector2(RNG.Next(0, 1024), RNG.Next(0, 1024)));
+        for (var i = 500; i < 600; i++)
+            Entities[i] = new Food(new Vector2(RNG.Next(0, 1024), RNG.Next(0, 1024)));
 
         app.UseWebSockets();
         app.Map("/ws", async context =>
@@ -62,7 +64,13 @@ public static class Program
                     entity.Update(delta);
                 }
 
-                var json = JsonSerializer.Serialize(Entities);
+                var entityDTOs = Entities.Values.Select(e => new EntityDTO(
+                    e.Position.X,
+                    e.Position.Y,
+                    ColorTranslator.ToHtml(e.Color)
+                ));
+                
+                var json = JsonSerializer.Serialize(entityDTOs);
                 var buffer = System.Text.Encoding.UTF8.GetBytes(json);
                 var segment = new ArraySegment<byte>(buffer);
 

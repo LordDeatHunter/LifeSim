@@ -45,11 +45,10 @@
         const x = lerp(prev.X, curr.X, t) * 1;
         const y = lerp(prev.Y, curr.Y, t) * 1;
         const color = curr.Color;
-        const rgb = `rgb(${color.R}, ${color.G}, ${color.B})`;
 
         ctx.beginPath();
         ctx.arc(x, y, 5, 0, Math.PI * 2);
-        ctx.fillStyle = rgb;
+        ctx.fillStyle = color;
         ctx.fill();
       }
 
