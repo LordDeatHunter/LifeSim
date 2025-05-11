@@ -1,8 +1,8 @@
 using System.Text.Json;
 using System.Net.WebSockets;
 using System.Collections.Concurrent;
-using System.Drawing;
-using LifeSim;
+using System.Diagnostics;
+using LifeSim.Entities;
 
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
@@ -12,9 +12,9 @@ var rng = new Random();
 var entities = new Dictionary<int, Entity>();
 
 for (var i = 0; i < 500; i++)
-    entities[i] = new Entity(rng.Next(0, 1000), rng.Next(0, 1000), Color.CornflowerBlue);
+    entities[i] = new Animal(rng.Next(0, 1000), rng.Next(0, 1000));
 for (var i = 0; i < 100; i++)
-    entities[i] = new Entity(rng.Next(0, 1000), rng.Next(0, 1000), Color.Crimson);
+    entities[i] = new Food(rng.Next(0, 1000), rng.Next(0, 1000));
 
 app.UseWebSockets();
 app.Map("/ws", async context =>
@@ -30,15 +30,20 @@ app.Map("/ws", async context =>
 
 _ = Task.Run(async () =>
 {
+    var stopwatch = new Stopwatch();
+    stopwatch.Start();
+    var lastTicks = stopwatch.ElapsedTicks;
+    var tickFrequency = (float)Stopwatch.Frequency;
+
     while (true)
     {
-        foreach (var id in entities.Keys.ToList())
-        {
-            entities[id].X += (float)(rng.NextDouble() - 0.5) * 5;
-            entities[id].Y += (float)(rng.NextDouble() - 0.5) * 5;
+        var currentTicks = stopwatch.ElapsedTicks;
+        var delta = (currentTicks - lastTicks) / tickFrequency;
+        lastTicks = currentTicks;
 
-            entities[id].X = float.Clamp(entities[id].X, 0, 1000);
-            entities[id].Y = float.Clamp(entities[id].Y, 0, 1000);
+        foreach (var entity in entities.Keys.Select(id => entities[id]))
+        {
+            entity.Update(delta);
         }
 
         var json = JsonSerializer.Serialize(entities);
