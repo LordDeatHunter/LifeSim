@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Net.WebSockets;
 using System.Collections.Concurrent;
+using System.Drawing;
 using LifeSim;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,7 +12,9 @@ var rng = new Random();
 var entities = new Dictionary<int, Entity>();
 
 for (var i = 0; i < 500; i++)
-    entities[i] = new Entity(rng.Next(0, 1000), rng.Next(0, 1000));
+    entities[i] = new Entity(rng.Next(0, 1000), rng.Next(0, 1000), Color.CornflowerBlue);
+for (var i = 0; i < 100; i++)
+    entities[i] = new Entity(rng.Next(0, 1000), rng.Next(0, 1000), Color.Crimson);
 
 app.UseWebSockets();
 app.Map("/ws", async context =>
@@ -31,14 +34,11 @@ _ = Task.Run(async () =>
     {
         foreach (var id in entities.Keys.ToList())
         {
-            var (x, y) = entities[id];
-            x += (float)(rng.NextDouble() - 0.5) * 5;
-            y += (float)(rng.NextDouble() - 0.5) * 5;
+            entities[id].X += (float)(rng.NextDouble() - 0.5) * 5;
+            entities[id].Y += (float)(rng.NextDouble() - 0.5) * 5;
 
-            x = float.Clamp(x, 0, 1000);
-            y = float.Clamp(y, 0, 1000);
-
-            entities[id] = new Entity(x, y);
+            entities[id].X = float.Clamp(entities[id].X, 0, 1000);
+            entities[id].Y = float.Clamp(entities[id].Y, 0, 1000);
         }
 
         var json = JsonSerializer.Serialize(entities);
