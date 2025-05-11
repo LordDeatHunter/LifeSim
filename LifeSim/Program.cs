@@ -16,14 +16,13 @@ for (int i = 0; i < 500; i++)
 app.UseWebSockets();
 app.Map("/ws", async context =>
 {
-    if (context.WebSockets.IsWebSocketRequest)
-    {
-        using var ws = await context.WebSockets.AcceptWebSocketAsync();
-        clients.Add(ws);
+    if (!context.WebSockets.IsWebSocketRequest) return;
 
-        while (ws.State == WebSocketState.Open)
-            await Task.Delay(1000);
-    }
+    using var ws = await context.WebSockets.AcceptWebSocketAsync();
+    clients.Add(ws);
+
+    while (ws.State == WebSocketState.Open)
+        await Task.Delay(1000);
 });
 
 _ = Task.Run(async () =>
