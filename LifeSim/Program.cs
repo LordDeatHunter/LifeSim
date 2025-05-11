@@ -10,8 +10,8 @@ var clients = new ConcurrentBag<WebSocket>();
 var rng = new Random();
 var entities = new Dictionary<int, Entity>();
 
-for (int i = 0; i < 500; i++)
-    entities[i] = new Entity(rng.Next(0, 100), rng.Next(0, 100));
+for (var i = 0; i < 500; i++)
+    entities[i] = new Entity(rng.Next(0, 1000), rng.Next(0, 1000));
 
 app.UseWebSockets();
 app.Map("/ws", async context =>
@@ -34,6 +34,10 @@ _ = Task.Run(async () =>
             var (x, y) = entities[id];
             x += (float)(rng.NextDouble() - 0.5) * 5;
             y += (float)(rng.NextDouble() - 0.5) * 5;
+
+            x = float.Clamp(x, 0, 1000);
+            y = float.Clamp(y, 0, 1000);
+
             entities[id] = new Entity(x, y);
         }
 

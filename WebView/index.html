@@ -4,7 +4,7 @@
   <title>Life Viewer</title>
 </head>
 <body>
-  <canvas id="view" width="500" height="500" style="border:1px solid"></canvas>
+  <canvas id="view" width="1000" height="1000" style="border:1px solid"></canvas>
   <script>
     const socket = new WebSocket("ws://localhost:5000/ws");
     const canvas = document.getElementById("view");
@@ -42,8 +42,8 @@
       for (const id in entities) {
         const { prev, curr, lastUpdate } = entities[id];
         const t = Math.min((now - lastUpdate) / lerpDuration, 1);
-        const x = lerp(prev.x, curr.x, t) * 5;
-        const y = lerp(prev.y, curr.y, t) * 5;
+        const x = lerp(prev.x, curr.x, t) * 1;
+        const y = lerp(prev.y, curr.y, t) * 1;
 
         ctx.beginPath();
         ctx.arc(x, y, 5, 0, Math.PI * 2);
