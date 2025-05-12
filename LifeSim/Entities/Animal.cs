@@ -29,6 +29,7 @@ public class Animal : Entity
         {
             nearestFood.MarkForDeletion();
         }
+        HandleCollision();
 
         var newChunkPosition = Position.ToChunkPosition();
 
@@ -53,4 +54,28 @@ public class Animal : Entity
     }
 
     private bool IsColliding(Entity other) => Vector2.Distance(Position, other.Position) < (Size + other.Size) / 2;
+
+    private void HandleCollision()
+    {
+        var chunkPosition = Position.ToChunkPosition();
+        for(var i = -1; i <= 1; i++)
+        for(var j = -1; j <= 1; j++)
+        {
+            var newChunkPos = new Vector2(chunkPosition.X + i, chunkPosition.Y + j);
+            if (!Program.Chunks.TryGetValue(newChunkPos, out var chunk)) continue;
+            foreach (var animal in chunk.Animals.Where(animal => animal != this).Where(IsColliding))
+            {
+                PushAway(animal);
+            }
+        }
+    }
+
+    private void PushAway(Animal animal)
+    {
+        var direction = Vector2.Normalize(Position - animal.Position);
+        var distance = Vector2.Distance(Position, animal.Position);
+        var force = (Size + animal.Size) / distance;
+        Position += direction * force;
+        animal.Position -= direction * force;
+    }
 }
