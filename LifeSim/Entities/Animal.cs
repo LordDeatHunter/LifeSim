@@ -6,7 +6,6 @@ namespace LifeSim.Entities;
 public class Animal : Entity
 {
     private const float Speed = 10f;
-    private readonly float EatDistance = 5f;
 
     public Animal(Vector2 position) : base(position, Color.CornflowerBlue)
     {
@@ -25,9 +24,8 @@ public class Animal : Entity
         var direction = Vector2.Normalize(nearestFood.Position - prevPosition);
 
         Position += direction * Speed * deltaTime;
-        Position = Position.Clamp(new Vector2(0, 0), new Vector2(1024, 1024));
 
-        if (Vector2.Distance(Position, nearestFood.Position) <= EatDistance)
+        if (IsColliding(nearestFood))
         {
             nearestFood.MarkForDeletion();
         }
@@ -53,4 +51,6 @@ public class Animal : Entity
         Program.Chunks[Position.ToChunkPosition()].Animals.Remove(this);
         Program.Animals.Remove(Id);
     }
+
+    private bool IsColliding(Entity other) => Vector2.Distance(Position, other.Position) < (Size + other.Size) / 2;
 }
