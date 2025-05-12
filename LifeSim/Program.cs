@@ -14,7 +14,7 @@ public static class Program
 {
     public static ConcurrentBag<WebSocket> Clients = new();
     public static Random RNG = new();
-    public static Dictionary<int, Entity> Entities = new();
+    public static Dictionary<Guid, Entity> Entities = new();
     public static Dictionary<Vector2, Chunk> Chunks = new();
 
     public static void Main(string[] args)
@@ -30,9 +30,16 @@ public static class Program
         }
 
         for (var i = 0; i < 500; i++)
-            Entities[i] = new Animal(new Vector2(RNG.Next(0, 1024), RNG.Next(0, 1024)));
-        for (var i = 500; i < 600; i++)
-            Entities[i] = new Food(new Vector2(RNG.Next(0, 1024), RNG.Next(0, 1024)));
+        {
+            var animal = new Animal(new Vector2(RNG.Next(0, 1024), RNG.Next(0, 1024)));
+            Entities[animal.Id] = animal;
+        }
+
+        for (var i = 0; i < 100; i++)
+        {
+            var food = new Food(new Vector2(RNG.Next(0, 1024), RNG.Next(0, 1024)));
+            Entities[food.Id] = food;
+        }
 
         app.UseWebSockets();
         app.Map("/ws", async context =>
@@ -65,11 +72,13 @@ public static class Program
                 }
 
                 var entityDTOs = Entities.Values.Select(e => new EntityDTO(
+                    e.GetType().Name,
+                    e.Id.ToString(),
                     e.Position.X,
                     e.Position.Y,
                     ColorTranslator.ToHtml(e.Color)
                 ));
-                
+
                 var json = JsonSerializer.Serialize(entityDTOs);
                 var buffer = System.Text.Encoding.UTF8.GetBytes(json);
                 var segment = new ArraySegment<byte>(buffer);

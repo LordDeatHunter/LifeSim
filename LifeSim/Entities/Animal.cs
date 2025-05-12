@@ -6,9 +6,12 @@ namespace LifeSim.Entities;
 public class Animal(Vector2 position) : Entity(position, Color.CornflowerBlue)
 {
     private const float Speed = 10f;
+    private readonly float EatDistance = 5f;
 
     public override void Update(float deltaTime)
     {
+        if (MarkedForDeletion) return;
+
         var prevPosition = Position;
         var prevChunkPosition = prevPosition.ToChunkPosition();
 
@@ -18,6 +21,11 @@ public class Animal(Vector2 position) : Entity(position, Color.CornflowerBlue)
 
         Position += direction * Speed * deltaTime;
         Position = Position.Clamp(new Vector2(0, 0), new Vector2(1024, 1024));
+
+        if (Vector2.Distance(Position, nearestFood.Position) <= EatDistance)
+        {
+            nearestFood.MarkForDeletion();
+        }
 
         var newChunkPosition = Position.ToChunkPosition();
 
@@ -33,7 +41,7 @@ public class Animal(Vector2 position) : Entity(position, Color.CornflowerBlue)
 
         var chunkPosition = Position.ToChunkPosition();
 
-        foreach (var food in Program.Chunks[chunkPosition].Entities.OfType<Food>())
+        foreach (var food in Program.Chunks[chunkPosition].Entities.OfType<Food>().Where(f => !f.MarkedForDeletion))
         {
             var distance = Vector2.Distance(Position, food.Position);
             if (distance >= nearestDistance) continue;

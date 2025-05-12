@@ -1,3 +1,3 @@
 ﻿namespace LifeSim.Data;
 
-public record EntityDTO(float X, float Y, string Color);
+public record EntityDTO(string type, string id, float x, float y, string color);
