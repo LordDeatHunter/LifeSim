@@ -3,10 +3,15 @@ using System.Numerics;
 
 namespace LifeSim.Entities;
 
-public class Animal(Vector2 position) : Entity(position, Color.CornflowerBlue)
+public class Animal : Entity
 {
     private const float Speed = 10f;
     private readonly float EatDistance = 5f;
+
+    public Animal(Vector2 position) : base(position, Color.CornflowerBlue)
+    {
+        Program.Chunks[position.ToChunkPosition()].Animals.Add(this);
+    }
 
     public override void Update(float deltaTime)
     {
@@ -30,8 +35,8 @@ public class Animal(Vector2 position) : Entity(position, Color.CornflowerBlue)
         var newChunkPosition = Position.ToChunkPosition();
 
         if (prevChunkPosition == newChunkPosition) return;
-        Program.Chunks[prevChunkPosition].Entities.Remove(this);
-        Program.Chunks[newChunkPosition].Entities.Add(this);
+        Program.Chunks[prevChunkPosition].Animals.Remove(this);
+        Program.Chunks[newChunkPosition].Animals.Add(this);
     }
 
     private Food? FindNearestFood()
@@ -39,16 +44,13 @@ public class Animal(Vector2 position) : Entity(position, Color.CornflowerBlue)
         Food nearestFood = null;
         var nearestDistance = float.MaxValue;
 
-        var chunkPosition = Position.ToChunkPosition();
+        return Program.Foods.Values.Where(f => !f.MarkedForDeletion).OrderBy(f => Vector2.Distance(Position, f.Position)).FirstOrDefault();
+    }
 
-        foreach (var food in Program.Chunks[chunkPosition].Entities.OfType<Food>().Where(f => !f.MarkedForDeletion))
-        {
-            var distance = Vector2.Distance(Position, food.Position);
-            if (distance >= nearestDistance) continue;
-            nearestDistance = distance;
-            nearestFood = food;
-        }
-
-        return nearestFood;
+    public override void MarkForDeletion()
+    {
+        base.MarkForDeletion();
+        Program.Chunks[Position.ToChunkPosition()].Animals.Remove(this);
+        Program.Animals.Remove(Id);
     }
 }

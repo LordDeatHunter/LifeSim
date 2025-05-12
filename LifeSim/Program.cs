@@ -14,8 +14,14 @@ public static class Program
 {
     public static ConcurrentBag<WebSocket> Clients = new();
     public static Random RNG = new();
-    public static Dictionary<Guid, Entity> Entities = new();
+    public static Dictionary<Guid, Food> Foods = new();
+    public static Dictionary<Guid, Animal> Animals = new();
     public static Dictionary<Vector2, Chunk> Chunks = new();
+    // helper for merging foods and animals
+    public static Dictionary<Guid, Entity> AllEntities =>
+        Animals.Values.ToDictionary(a => a.Id, Entity (a) => a)
+        .Concat(Foods.Values.ToDictionary(f => f.Id, Entity (f) => f))
+        .ToDictionary(e => e.Key, e => e.Value);
 
     public static void Main(string[] args)
     {
@@ -32,13 +38,13 @@ public static class Program
         for (var i = 0; i < 500; i++)
         {
             var animal = new Animal(new Vector2(RNG.Next(0, 1024), RNG.Next(0, 1024)));
-            Entities[animal.Id] = animal;
+            Animals[animal.Id] = animal;
         }
 
-        for (var i = 0; i < 100; i++)
+        for (var i = 0; i < 400; i++)
         {
             var food = new Food(new Vector2(RNG.Next(0, 1024), RNG.Next(0, 1024)));
-            Entities[food.Id] = food;
+            Foods[food.Id] = food;
         }
 
         app.UseWebSockets();
@@ -66,12 +72,12 @@ public static class Program
                 var delta = (currentTicks - lastTicks) / tickFrequency;
                 lastTicks = currentTicks;
 
-                foreach (var entity in Entities.Keys.Select(id => Entities[id]))
+                foreach (var entity in AllEntities.Values)
                 {
                     entity.Update(delta);
                 }
 
-                var entityDTOs = Entities.Values.Select(e => new EntityDTO(
+                var entityDTOs = AllEntities.Values.Select(e => new EntityDTO(
                     e.GetType().Name,
                     e.Id.ToString(),
                     e.Position.X,
@@ -89,6 +95,9 @@ public static class Program
                     catch { /* dead client */ }
                 }
 
+                var food = new Food(new Vector2(RNG.Next(0, 1024), RNG.Next(0, 1024)));
+                Foods[food.Id] = food;
+ 
                 await Task.Delay(100);
             }
         });

@@ -7,5 +7,6 @@ public class Chunk(Vector2 position)
 {
     public Vector2 Position { get; } = position;
     public const int Size = 128;
-    public HashSet<Entity> Entities { get; } = [];
+    public HashSet<Entity> Food { get; } = [];
+    public HashSet<Entity> Animals { get; } = [];
 }

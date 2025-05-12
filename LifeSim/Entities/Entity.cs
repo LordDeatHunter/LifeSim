@@ -15,15 +15,12 @@ public abstract class Entity
         Id = Guid.NewGuid();
         Position = position;
         Color = color;
-        Program.Chunks[position.ToChunkPosition()].Entities.Add(this);
     }
 
     public abstract void Update(float deltaTime);
     
-    public void MarkForDeletion()
+    public virtual void MarkForDeletion()
     {
         MarkedForDeletion = true;
-        Program.Chunks[Position.ToChunkPosition()].Entities.Remove(this);
-        Program.Entities.Remove(Id);
     }
 }
