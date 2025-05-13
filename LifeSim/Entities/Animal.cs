@@ -78,8 +78,9 @@ public class Animal : Entity
 
     private void PushAway(Animal animal)
     {
-        var direction = Vector2.Normalize(Position - animal.Position);
         var distance = Vector2.Distance(Position, animal.Position);
+        if (distance == 0) return;
+        var direction = Vector2.Normalize(Position - animal.Position);
         var force = (Size + animal.Size) / distance;
         Position += direction * force;
         animal.Position -= direction * force;

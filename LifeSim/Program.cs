@@ -28,8 +28,8 @@ public static class Program
         var builder = WebApplication.CreateBuilder(args);
         var app = builder.Build();
 
-        for (var i = 0; i < 32; i++)
-        for (var j = 0; j < 32; j++)
+        for (var i = 0; i <= 32; i++)
+        for (var j = 0; j <= 32; j++)
         {
             var chunkPos = new Vector2(i, j);
             Chunks[chunkPos] = new Chunk(chunkPos);
