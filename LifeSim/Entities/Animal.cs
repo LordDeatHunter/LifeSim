@@ -1,5 +1,6 @@
 ﻿using System.Drawing;
 using System.Numerics;
+using LifeSim.Components;
 
 namespace LifeSim.Entities;
 
@@ -10,10 +11,15 @@ public class Animal : Entity
     public Animal(Vector2 position) : base(position, Color.CornflowerBlue)
     {
         Program.Chunks[position.ToChunkPosition()].Animals.Add(this);
+
+        var lifespan = 8F + Program.RNG.NextSingle() * 8F;
+        Components.Add(new LifespanComponent(lifespan));
     }
 
     public override void Update(float deltaTime)
     {
+        Components.ForEach(c => c.Update(this, deltaTime));
+
         if (MarkedForDeletion) return;
 
         var prevPosition = Position;

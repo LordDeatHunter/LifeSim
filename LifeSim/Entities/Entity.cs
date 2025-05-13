@@ -1,5 +1,6 @@
 using System.Drawing;
 using System.Numerics;
+using LifeSim.Components;
 
 namespace LifeSim.Entities;
 
@@ -15,6 +16,7 @@ public abstract class Entity(Vector2 position, Color color, float size = 8F)
     public Color Color { get; set; } = color;
     public float Size { get; set; } = size;
     public bool MarkedForDeletion { get; private set; }
+    protected readonly List<IComponent> Components = [];
 
     public abstract void Update(float deltaTime);
     
