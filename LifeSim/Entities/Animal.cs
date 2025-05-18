@@ -6,10 +6,17 @@ namespace LifeSim.Entities;
 
 public class Animal : Entity
 {
-    private const float Speed = 10f;
+    private float Speed { get; set; } = 24F;
     private Entity? _target;
     private const float MaxSaturation = 20f;
     private float _currentSaturation = 10f;
+    private const float MaxReproductionCooldown = 5f;
+    private float _reproductionCooldown;
+    private float ReproductionCooldown
+    {
+        get => _reproductionCooldown;
+        set => _reproductionCooldown = float.Clamp(value, 0F, MaxReproductionCooldown);
+    }
     public float Saturation
     {
         get => _currentSaturation;
@@ -34,6 +41,7 @@ public class Animal : Entity
         Components.ForEach(c => c.Update(this, deltaTime));
 
         Saturation -= HungerRate * deltaTime;
+        ReproductionCooldown += deltaTime;
 
         if (MarkedForDeletion) return;
 
@@ -42,20 +50,48 @@ public class Animal : Entity
 
         if (_target == null || _target.MarkedForDeletion)
         {
-            _target = FindNearestFood();
+            _target = Saturation >= 15 && ReproductionCooldown >= MaxReproductionCooldown 
+                ? FindNearestAnimal()
+                : FindNearestFood();
         }
 
         if (_target != null)
         {
             var direction = Vector2.Normalize(_target.Position - prevPosition);
+            if (float.IsNaN(direction.X) || float.IsNaN(direction.Y))
+            {
+                direction = Vector2.Zero;
+            }
+            else
+            {
+                direction = Vector2.Normalize(direction);
+            }
 
             Position += direction * Speed * deltaTime;
 
             if (IsColliding(_target))
             {
-                var food = (Food)_target;
-                Saturation += food.Size / 2;
-                _target.MarkForDeletion();
+                switch (_target)
+                {
+                    case Animal animal when Saturation >= 5 && ReproductionCooldown >= MaxReproductionCooldown:
+                    {
+                        Saturation -= 5;
+                        var newAnimal = new Animal(Position)
+                        {
+                            Position = (Position + animal.Position) / 2,
+                            Size = (Size + animal.Size) / 2 + Program.RNG.NextSingle() * 4 - 2,
+                            Color = GetOffspringColor(animal),
+                            Speed = (Size + animal.Size) / 2 + Program.RNG.NextSingle() * 4 - 2,
+                        };
+                        Program.Animals[newAnimal.Id] = newAnimal;
+                        _target = null;
+                        break;
+                    }
+                    case Food food:
+                        Saturation += food.Size / 2;
+                        _target.MarkForDeletion();
+                        break;
+                }
             }
             HandleCollision();
         }
@@ -66,8 +102,18 @@ public class Animal : Entity
         Program.Chunks[prevChunkPosition].Animals.Remove(this);
         Program.Chunks[newChunkPosition].Animals.Add(this);
     }
+    
+    private Color GetOffspringColor(Animal other)
+    {
+        var r = int.Clamp((int)((Color.R + other.Color.R) / 2F + Program.RNG.Next(-20, 20)), 0, 255);
+        var g = int.Clamp((int)((Color.G + other.Color.G) / 2F + Program.RNG.Next(-20, 20)), 0, 255);
+        var b = int.Clamp((int)((Color.B + other.Color.B) / 2F + Program.RNG.Next(-20, 20)), 0, 255);
+        
+        return Color.FromArgb(r, g, b);
+    }
 
     private Food? FindNearestFood() => Program.Foods.Values.Where(f => !f.MarkedForDeletion).OrderBy(f => Vector2.Distance(Position, f.Position)).FirstOrDefault();
+    private Animal? FindNearestAnimal() => Program.Animals.Values.Where(a => !a.MarkedForDeletion).OrderBy(a => Vector2.Distance(Position, a.Position)).FirstOrDefault();
 
     public override void MarkForDeletion()
     {
