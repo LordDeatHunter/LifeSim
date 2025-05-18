@@ -14,7 +14,7 @@ public abstract class Entity(Vector2 position, Color color, float size = 8F)
         set => _position = value.Clamp(new Vector2(0, 0), new Vector2(1024, 1024));
     }
     public Color Color { get; set; } = color;
-    public float Size { get; set; } = size;
+    public float Size { get; set; } = float.Clamp(size, 1F, 64F);
     public bool MarkedForDeletion { get; private set; }
     protected readonly List<IComponent> Components = [];
 
