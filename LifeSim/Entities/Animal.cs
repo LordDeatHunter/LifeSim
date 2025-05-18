@@ -7,6 +7,7 @@ namespace LifeSim.Entities;
 public class Animal : Entity
 {
     private const float Speed = 10f;
+    private Entity? _target;
 
     public Animal(Vector2 position) : base(position, Color.CornflowerBlue)
     {
@@ -25,17 +26,23 @@ public class Animal : Entity
         var prevPosition = Position;
         var prevChunkPosition = prevPosition.ToChunkPosition();
 
-        var nearestFood = FindNearestFood();
-        if (nearestFood == null) return;
-        var direction = Vector2.Normalize(nearestFood.Position - prevPosition);
-
-        Position += direction * Speed * deltaTime;
-
-        if (IsColliding(nearestFood))
+        if (_target == null || _target.MarkedForDeletion)
         {
-            nearestFood.MarkForDeletion();
+            _target = FindNearestFood();
         }
-        HandleCollision();
+
+        if (_target != null)
+        {
+            var direction = Vector2.Normalize(_target.Position - prevPosition);
+
+            Position += direction * Speed * deltaTime;
+
+            if (IsColliding(_target))
+            {
+                _target.MarkForDeletion();
+            }
+            HandleCollision();
+        }
 
         var newChunkPosition = Position.ToChunkPosition();
 
@@ -44,13 +51,7 @@ public class Animal : Entity
         Program.Chunks[newChunkPosition].Animals.Add(this);
     }
 
-    private Food? FindNearestFood()
-    {
-        Food nearestFood = null;
-        var nearestDistance = float.MaxValue;
-
-        return Program.Foods.Values.Where(f => !f.MarkedForDeletion).OrderBy(f => Vector2.Distance(Position, f.Position)).FirstOrDefault();
-    }
+    private Food? FindNearestFood() => Program.Foods.Values.Where(f => !f.MarkedForDeletion).OrderBy(f => Vector2.Distance(Position, f.Position)).FirstOrDefault();
 
     public override void MarkForDeletion()
     {
@@ -79,7 +80,7 @@ public class Animal : Entity
     private void PushAway(Animal animal)
     {
         var distance = Vector2.Distance(Position, animal.Position);
-        if (distance == 0) return;
+        if (distance < 0.1f) return;
         var direction = Vector2.Normalize(Position - animal.Position);
         var force = (Size + animal.Size) / distance;
         Position += direction * force;
