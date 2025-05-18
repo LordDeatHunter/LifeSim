@@ -56,9 +56,9 @@
         if (id in prevEntities) continue;
         recentlySpawned[id] = 0;
       }
-
-      document.querySelector("h2:nth-of-type(1)").innerText = `Animals: ${animalCount}`;
-      document.querySelector("h2:nth-of-type(2)").innerText = `Food: ${foodCount}`;
+      let total=animalCount+foodCount;
+      document.querySelector("h2:nth-of-type(1)").innerText = `Animals: ${(animalCount/total)*100}%`;
+      document.querySelector("h2:nth-of-type(2)").innerText = `Food: ${(foodCount/total)*100}%`;
     };
 
     const renderEntity = (position, diameter, color) => {
