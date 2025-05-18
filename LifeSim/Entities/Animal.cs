@@ -6,7 +6,7 @@ namespace LifeSim.Entities;
 
 public class Animal : Entity
 {
-    private float Speed { get; set; } = 24F;
+    private float Speed { get; set; } = 16F;
     private Entity? _target;
     private const float MaxSaturation = 20f;
     private float _currentSaturation = 10f;
@@ -26,7 +26,20 @@ public class Animal : Entity
             if (_currentSaturation <= 0) MarkForDeletion();
         }
     }
-    public float HungerRate { get; } = 0.5f;
+    public float HungerRate { get; } = 1F;
+
+    public Animal(Vector2 position, float size, Color color, float speed) : base(position, color, size)
+    {
+        Program.Chunks[position.ToChunkPosition()].Animals.Add(this);
+
+        var sizeRatio = size / 8F;
+
+        var lifespan = 24F + Program.RNG.NextSingle() * 16F + size / 4F;
+        Components.Add(new LifespanComponent(lifespan));
+
+        HungerRate *= sizeRatio;
+        Speed = speed / sizeRatio;
+    }
 
     public Animal(Vector2 position) : base(position, Color.CornflowerBlue)
     {
@@ -68,33 +81,10 @@ public class Animal : Entity
             }
 
             Position += direction * Speed * deltaTime;
-
-            if (IsColliding(_target))
-            {
-                switch (_target)
-                {
-                    case Animal animal when Saturation >= 5 && ReproductionCooldown >= MaxReproductionCooldown:
-                    {
-                        Saturation -= 5;
-                        var newAnimal = new Animal(Position)
-                        {
-                            Position = (Position + animal.Position) / 2,
-                            Size = (Size + animal.Size) / 2 + Program.RNG.NextSingle() * 4 - 2,
-                            Color = GetOffspringColor(animal),
-                            Speed = (Size + animal.Size) / 2 + Program.RNG.NextSingle() * 4 - 2,
-                        };
-                        Program.Animals[newAnimal.Id] = newAnimal;
-                        _target = null;
-                        break;
-                    }
-                    case Food food:
-                        Saturation += food.Size / 2;
-                        _target.MarkForDeletion();
-                        break;
-                }
-            }
-            HandleCollision();
         }
+
+        HandleCollision();
+        HandleReproductionTarget();
 
         var newChunkPosition = Position.ToChunkPosition();
 
@@ -113,7 +103,7 @@ public class Animal : Entity
     }
 
     private Food? FindNearestFood() => Program.Foods.Values.Where(f => !f.MarkedForDeletion).OrderBy(f => Vector2.Distance(Position, f.Position)).FirstOrDefault();
-    private Animal? FindNearestAnimal() => Program.Animals.Values.Where(a => !a.MarkedForDeletion).OrderBy(a => Vector2.Distance(Position, a.Position)).FirstOrDefault();
+    private Animal? FindNearestAnimal() => Program.Animals.Values.Where(a => !a.MarkedForDeletion && a != this).OrderBy(a => Vector2.Distance(Position, a.Position)).FirstOrDefault();
 
     public override void MarkForDeletion()
     {
@@ -123,6 +113,27 @@ public class Animal : Entity
     }
 
     private bool IsColliding(Entity other) => Vector2.Distance(Position, other.Position) < (Size + other.Size) / 2;
+
+    private void HandleReproductionTarget()
+    {
+        if (_target is not Animal animal || animal == this) return;
+        if (!CanReproduce() || !animal.CanReproduce()) return;
+
+        Saturation -= 5;
+        animal.Saturation -= 5;
+
+        var position = (Position + animal.Position) / 2;
+        var size = (Size + animal.Size) / 2 + Program.RNG.NextSingle() * 4 - 2;
+        var color = GetOffspringColor(animal);
+        var speed = (Size + animal.Size) / 2 + Program.RNG.NextSingle() * 4 - 2;
+
+        var newAnimal = new Animal(position, size, color, speed);
+
+        Program.Animals[newAnimal.Id] = newAnimal;
+        _target = null;
+    }
+
+    public bool CanReproduce() => !MarkedForDeletion && Saturation >= 5 && ReproductionCooldown >= MaxReproductionCooldown;
 
     private void HandleCollision()
     {
@@ -136,6 +147,10 @@ public class Animal : Entity
             {
                 PushAway(animal);
             }
+            foreach (var food in chunk.Food.Where(IsColliding))
+            {
+                Consume(food);
+            }
         }
     }
 
@@ -147,5 +162,16 @@ public class Animal : Entity
         var force = (Size + animal.Size) / distance;
         Position += direction * force;
         animal.Position -= direction * force;
+    }
+
+    private void Consume(Food food)
+    {
+        Saturation += food.Size / 2;
+        food.MarkForDeletion();
+
+        if (_target == food)
+        {
+            _target = null;
+        }
     }
 }
