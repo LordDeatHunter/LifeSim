@@ -95,14 +95,17 @@ public static class Program
                     try { await client.SendAsync(segment, WebSocketMessageType.Text, true, CancellationToken.None); }
                     catch { /* dead client */ }
                 }
-                
-                var foodAmount = RNG.Next(0, 10);
-                for (var i = 0; i < foodAmount; i++)
+
+                if (Foods.Count < 1000)
                 {
-                    var food = new Food(new Vector2(RNG.Next(0, 1024), RNG.Next(0, 1024)));
-                    Foods[food.Id] = food;
+                    var foodAmount = RNG.Next(0, 10);
+                    for (var i = 0; i < foodAmount; i++)
+                    {
+                        var food = new Food(new Vector2(RNG.Next(0, 1024), RNG.Next(0, 1024)));
+                        Foods[food.Id] = food;
+                    }
                 }
- 
+
                 await Task.Delay(100);
             }
         });
