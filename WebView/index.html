@@ -4,7 +4,13 @@
   <title>Life Viewer</title>
 </head>
 <body>
+<div style="display:flex;align-items:center;justify-content:center;gap:32px;">
   <canvas id="view" width="1000" height="1000" style="border:1px solid"></canvas>
+  <div style="display:flex;flex-direction:column;align-self:start;padding-top:100px;width:200px">
+    <h2>Animals: 0</h2>
+    <h2>Food: 0</h2>
+  </div>
+</div>
   <script>
     const socket = new WebSocket("ws://localhost:5000/ws");
     const canvas = document.getElementById("view");
@@ -16,18 +22,30 @@
     let prevEntities = {};
     let entities = {};
     let lastUpdate = performance.now();
-    
+
     let recentlySpawned = {};
     let recentlyDespawned = {};
+
+    let animalCount = 0;
+    let foodCount = 0;
 
     socket.onmessage = (event) => {
       const data = JSON.parse(event.data);
       lastUpdate = performance.now();
 
+      animalCount = 0;
+      foodCount = 0;
+
       prevEntities = { ...entities };
       entities = {};
       for (const entity of data) {
         entities[entity.id] = entity;
+
+        if (entity.type === "Animal") {
+          animalCount++;
+        } else if (entity.type === "Food") {
+          foodCount++;
+        }
       }
 
       for (const id in prevEntities) {
@@ -38,8 +56,11 @@
         if (id in prevEntities) continue;
         recentlySpawned[id] = 0;
       }
+
+      document.querySelector("h2:nth-of-type(1)").innerText = `Animals: ${animalCount}`;
+      document.querySelector("h2:nth-of-type(2)").innerText = `Food: ${foodCount}`;
     };
-    
+
     const renderEntity = (position, diameter, color) => {
       ctx.beginPath();
       ctx.arc(position.x, position.y, diameter / 2, 0, Math.PI * 2);
@@ -74,10 +95,10 @@
 
         renderEntity({ x, y }, size, color);
       }
-      
+
       for (const id in recentlyDespawned) {
         const { entity, opacity } = recentlyDespawned[id];
-        
+
         if (opacity <= 0) {
           delete recentlyDespawned[id];
           continue;
