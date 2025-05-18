@@ -16,6 +16,9 @@
     let prevEntities = {};
     let entities = {};
     let lastUpdate = performance.now();
+    
+    let recentlySpawned = {};
+    let recentlyDespawned = {};
 
     socket.onmessage = (event) => {
       const data = JSON.parse(event.data);
@@ -26,26 +29,66 @@
       for (const entity of data) {
         entities[entity.id] = entity;
       }
+
+      for (const id in prevEntities) {
+        if (id in entities) continue;
+        recentlyDespawned[id] = { entity: prevEntities[id], opacity: 1 };
+      }
+      for (const id in entities) {
+        if (id in prevEntities) continue;
+        recentlySpawned[id] = 0;
+      }
+    };
+    
+    const renderEntity = (position, diameter, color) => {
+      ctx.beginPath();
+      ctx.arc(position.x, position.y, diameter / 2, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
     };
 
     const render = () => {
       const now = performance.now();
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+      const t = Math.min((now - lastUpdate) / lerpDuration, 1);
+
       for (const id in entities) {
         const curr = entities[id];
         const prev = id in prevEntities ? prevEntities[id] : curr;
 
-        const t = Math.min((now - lastUpdate) / lerpDuration, 1);
+        let opacity = 1;
+
+        if (recentlySpawned[id] !== undefined) {
+          opacity = recentlySpawned[id];
+          recentlySpawned[id] += 0.03 * t;
+          if (recentlySpawned[id] > 1) {
+            delete recentlySpawned[id];
+          }
+        }
+
         const x = lerp(prev.x, curr.x, t);
         const y = lerp(prev.y, curr.y, t);
-        const color = curr.color;
-        const size = curr.size / 2;
+        const color = curr.color + (Math.floor(opacity * 255)).toString(16).padStart(2, "0");
+        const size = curr.size;
 
-        ctx.beginPath();
-        ctx.arc(x, y, size, 0, Math.PI * 2);
-        ctx.fillStyle = color;
-        ctx.fill();
+        renderEntity({ x, y }, size, color);
+      }
+      
+      for (const id in recentlyDespawned) {
+        const { entity, opacity } = recentlyDespawned[id];
+        
+        if (opacity <= 0) {
+          delete recentlyDespawned[id];
+          continue;
+        }
+
+        const { x, y, size } = entity;
+        const color = entity.color + (Math.floor(opacity * 255)).toString(16).padStart(2, "0");
+
+        recentlyDespawned[id].opacity -= 0.03 * t;
+
+        renderEntity({ x, y }, size, color);
       }
 
       requestAnimationFrame(render);

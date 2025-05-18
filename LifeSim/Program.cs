@@ -82,7 +82,7 @@ public static class Program
                     e.Id.ToString(),
                     e.Position.X,
                     e.Position.Y,
-                    ColorTranslator.ToHtml(e.Color),
+                    e.Color.ToHex(),
                     e.Size
                 ));
 
