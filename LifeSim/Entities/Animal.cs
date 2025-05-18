@@ -8,18 +8,32 @@ public class Animal : Entity
 {
     private const float Speed = 10f;
     private Entity? _target;
+    private const float MaxSaturation = 20f;
+    private float _currentSaturation = 10f;
+    public float Saturation
+    {
+        get => _currentSaturation;
+        set
+        {
+            _currentSaturation = float.Min(MaxSaturation, value);
+            if (_currentSaturation <= 0) MarkForDeletion();
+        }
+    }
+    public float HungerRate { get; } = 0.5f;
 
     public Animal(Vector2 position) : base(position, Color.CornflowerBlue)
     {
         Program.Chunks[position.ToChunkPosition()].Animals.Add(this);
 
-        var lifespan = 8F + Program.RNG.NextSingle() * 8F;
+        var lifespan = 24F + Program.RNG.NextSingle() * 16F;
         Components.Add(new LifespanComponent(lifespan));
     }
 
     public override void Update(float deltaTime)
     {
         Components.ForEach(c => c.Update(this, deltaTime));
+
+        Saturation -= HungerRate * deltaTime;
 
         if (MarkedForDeletion) return;
 
@@ -39,6 +53,8 @@ public class Animal : Entity
 
             if (IsColliding(_target))
             {
+                var food = (Food)_target;
+                Saturation += food.Size / 2;
                 _target.MarkForDeletion();
             }
             HandleCollision();
