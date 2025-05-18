@@ -5,7 +5,7 @@ namespace LifeSim.Entities;
 
 public class Food : Entity
 {
-    public Food(Vector2 position) : base(position, Color.Crimson)
+    public Food(Vector2 position) : base(position, Color.Crimson, Program.RNG.NextSingle() * 14F + 2F)
     {
         Program.Chunks[position.ToChunkPosition()].Food.Add(this);
     }

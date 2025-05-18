@@ -87,7 +87,7 @@ public class Animal : Entity
         Program.Chunks[prevChunkPosition].Animals.Remove(this);
         Program.Chunks[newChunkPosition].Animals.Add(this);
     }
-    
+
     private Color GetOffspringColor(Animal other)
     {
         var r = int.Clamp((int)((Color.R + other.Color.R) / 2F + Program.RNG.Next(-20, 20)), 0, 255);
