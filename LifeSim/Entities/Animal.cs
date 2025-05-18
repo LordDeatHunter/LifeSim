@@ -6,9 +6,9 @@ namespace LifeSim.Entities;
 
 public class Animal : Entity
 {
-    private float Speed { get; set; } = 16F;
+    private float Speed { get; set; }
     private Entity? _target;
-    private const float MaxSaturation = 20f;
+    private float _maxSaturation = 20f;
     private float _currentSaturation = 10f;
     private const float MaxReproductionCooldown = 5f;
     private float _reproductionCooldown;
@@ -22,13 +22,13 @@ public class Animal : Entity
         get => _currentSaturation;
         set
         {
-            _currentSaturation = float.Min(MaxSaturation, value);
+            _currentSaturation = float.Min(_maxSaturation, value);
             if (_currentSaturation <= 0) MarkForDeletion();
         }
     }
-    public float HungerRate { get; } = 1F;
+    public float HungerRate { get; } = 2F;
 
-    public Animal(Vector2 position, float size, Color color, float speed) : base(position, color, size)
+    private Animal(Vector2 position, float size, Color color, float speed) : base(position, color, size)
     {
         Program.Chunks[position.ToChunkPosition()].Animals.Add(this);
 
@@ -37,17 +37,12 @@ public class Animal : Entity
         var lifespan = 24F + Program.RNG.NextSingle() * 16F + size / 4F;
         Components.Add(new LifespanComponent(lifespan));
 
-        HungerRate *= sizeRatio;
+        HungerRate *= 1 / MathF.Sqrt(size);
+        _maxSaturation = 20F + size / 4F;
         Speed = speed / sizeRatio;
     }
 
-    public Animal(Vector2 position) : base(position, Color.CornflowerBlue)
-    {
-        Program.Chunks[position.ToChunkPosition()].Animals.Add(this);
-
-        var lifespan = 24F + Program.RNG.NextSingle() * 16F;
-        Components.Add(new LifespanComponent(lifespan));
-    }
+    public Animal(Vector2 position) : this(position, 8F, Color.CornflowerBlue, 16F) { }
 
     public override void Update(float deltaTime)
     {
