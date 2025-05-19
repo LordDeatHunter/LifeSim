@@ -28,6 +28,14 @@ body {
   gap: 32px;
 }
 
+.viewer-count {
+  display:flex;
+  gap: 15px;
+  align-items: center;
+  justify-content: center;
+  /* font-size: 24px; */
+}
+
 #view {
   border: 1px solid;
 }
