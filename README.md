@@ -1,5 +1,5 @@
 To run the fronted 
-`cd cd .\WebView\`
+`cd .\WebView\`
 `python -m http.server 80`
 
 To run the backend
