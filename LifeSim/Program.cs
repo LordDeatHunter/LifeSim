@@ -86,7 +86,15 @@ public static class Program
                     e.Size
                 ));
 
-                var json = JsonSerializer.Serialize(entityDTOs);
+                var timeFromStart = stopwatch.Elapsed.TotalMilliseconds;
+
+                var payload = new
+                {
+                    entities = entityDTOs,
+                    timeFromStart
+                };
+
+                var json = JsonSerializer.Serialize(payload);
                 var buffer = System.Text.Encoding.UTF8.GetBytes(json);
                 var segment = new ArraySegment<byte>(buffer);
 
