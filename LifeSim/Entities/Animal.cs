@@ -6,9 +6,9 @@ namespace LifeSim.Entities;
 
 public class Animal : Entity
 {
-    private float Speed { get; set; }
+    private float Speed { get; set; } = 16F;
     private Entity? _target;
-    private float _maxSaturation = 20f;
+    private readonly float _maxSaturation = 20f;
     private float _currentSaturation = 10f;
     private const float MaxReproductionCooldown = 5f;
     private float _reproductionCooldown;
@@ -28,21 +28,20 @@ public class Animal : Entity
     }
     public float HungerRate { get; } = 2F;
 
-    private Animal(Vector2 position, float size, Color color, float speed) : base(position, color, size)
+    private Animal(Vector2 position, float size, Color color) : base(position, color, size)
     {
+        Size = size;
+
         Program.Chunks[position.ToChunkPosition()].Animals.Add(this);
 
-        var sizeRatio = size / 8F;
-
-        var lifespan = 24F + Program.RNG.NextSingle() * 16F + size / 4F;
+        var lifespan = 24F + Program.RNG.NextSingle() * 16F + Size / 4F;
         Components.Add(new LifespanComponent(lifespan));
 
-        HungerRate *= 1 / MathF.Sqrt(size);
-        _maxSaturation = 20F + size / 4F;
-        Speed = speed / sizeRatio;
+        HungerRate *= 1 / MathF.Sqrt(Size);
+        _maxSaturation += Program.RNG.NextSingle() * 10F;
     }
 
-    public Animal(Vector2 position) : this(position, 8F, Color.CornflowerBlue, 16F) { }
+    public Animal(Vector2 position) : this(position, 8F, Color.CornflowerBlue) { }
 
     public override void Update(float deltaTime)
     {
@@ -61,6 +60,11 @@ public class Animal : Entity
             _target = Saturation >= 15 && ReproductionCooldown >= MaxReproductionCooldown 
                 ? FindNearestAnimal()
                 : FindNearestFood();
+        }
+
+        if (_target is Animal && Saturation < 5)
+        {
+            _target = FindNearestFood();
         }
 
         if (_target != null)
@@ -98,7 +102,10 @@ public class Animal : Entity
     }
 
     private Food? FindNearestFood() => Program.Foods.Values.Where(f => !f.MarkedForDeletion).OrderBy(f => Vector2.Distance(Position, f.Position)).FirstOrDefault();
-    private Animal? FindNearestAnimal() => Program.Animals.Values.Where(a => !a.MarkedForDeletion && a != this).OrderBy(a => Vector2.Distance(Position, a.Position)).FirstOrDefault();
+    private Animal? FindNearestAnimal() => Program.Animals.Values
+        .Where(a => !a.MarkedForDeletion && a != this && CanMate(this, a))
+        .OrderBy(a => Vector2.Distance(Position, a.Position))
+        .FirstOrDefault();
 
     public override void MarkForDeletion()
     {
@@ -112,7 +119,7 @@ public class Animal : Entity
     private void HandleReproductionTarget()
     {
         if (_target is not Animal animal || animal == this) return;
-        if (!CanReproduce() || !animal.CanReproduce()) return;
+        if (!CanMate(this, animal)) return;
 
         Saturation -= 5;
         animal.Saturation -= 5;
@@ -120,13 +127,14 @@ public class Animal : Entity
         var position = (Position + animal.Position) / 2;
         var size = (Size + animal.Size) / 2 + Program.RNG.NextSingle() * 4 - 2;
         var color = GetOffspringColor(animal);
-        var speed = (Size + animal.Size) / 2 + Program.RNG.NextSingle() * 4 - 2;
 
-        var newAnimal = new Animal(position, size, color, speed);
+        var newAnimal = new Animal(position, size, color);
 
         Program.Animals[newAnimal.Id] = newAnimal;
         _target = null;
     }
+
+    public static bool CanMate(Animal a, Animal b) => a.CanReproduce() && b.CanReproduce() && Vector2.Distance(a.Position, b.Position) <= 32F && MathF.Abs(a.Size - b.Size) < 8F;
 
     public bool CanReproduce() => !MarkedForDeletion && Saturation >= 5 && ReproductionCooldown >= MaxReproductionCooldown;
 
