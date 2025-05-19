@@ -12,7 +12,7 @@ namespace LifeSim;
 
 public static class Program
 {
-    public static ConcurrentBag<WebSocket> Clients = new();
+    public static ConcurrentDictionary<WebSocket, byte> Clients = new();
     public static Random RNG = new();
     public static Dictionary<Guid, Food> Foods = new();
     public static Dictionary<Guid, Animal> Animals = new();
@@ -63,10 +63,27 @@ public static class Program
             if (!context.WebSockets.IsWebSocketRequest) return;
 
             using var ws = await context.WebSockets.AcceptWebSocketAsync();
-            Clients.Add(ws);
+            Clients.TryAdd(ws, 0);
 
-            while (ws.State == WebSocketState.Open)
-                await Task.Delay(1000);
+            var buffer = new byte[1];
+
+            try
+            {
+                while (ws.State == WebSocketState.Open)
+                {
+                    var result = await ws.ReceiveAsync(buffer, CancellationToken.None);
+                    if (result.MessageType == WebSocketMessageType.Close) break;
+                    await Task.Delay(1000);
+                }
+            }
+            catch
+            { /* ignore */ }
+            finally
+            {
+                Clients.TryRemove(ws, out _);
+                if (ws.State is not (WebSocketState.Closed or WebSocketState.Aborted))
+                    await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Inactive socket cleanup.", CancellationToken.None);
+            }
         });
 
         _ = Task.Run(async () =>
@@ -97,18 +114,20 @@ public static class Program
                 ));
 
                 var timeFromStart = stopwatch.Elapsed.TotalMilliseconds;
+                var activeClients = Clients.Keys.Where(c => c.State == WebSocketState.Open).ToList();
 
                 var payload = new
                 {
                     entities = entityDTOs,
-                    timeFromStart
+                    timeFromStart,
+                    activeClients = activeClients.Count
                 };
 
                 var json = JsonSerializer.Serialize(payload);
                 var buffer = System.Text.Encoding.UTF8.GetBytes(json);
                 var segment = new ArraySegment<byte>(buffer);
 
-                foreach (var client in Clients.Where(c => c.State == WebSocketState.Open))
+                foreach (var client in activeClients)
                 {
                     try { await client.SendAsync(segment, WebSocketMessageType.Text, true, CancellationToken.None); }
                     catch { /* dead client */ }
