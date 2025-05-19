@@ -26,15 +26,12 @@
     let recentlySpawned = {};
     let recentlyDespawned = {};
 
-    let animalCount = 0;
-    let foodCount = 0;
-
     socket.onmessage = (event) => {
       const data = JSON.parse(event.data);
       lastUpdate = performance.now();
 
-      animalCount = 0;
-      foodCount = 0;
+      let animalCount = 0;
+      let foodCount = 0;
 
       prevEntities = { ...entities };
       entities = {};
@@ -57,10 +54,10 @@
         recentlySpawned[id] = 0;
       }
       const total = animalCount + foodCount;
-      animalCount = ((animalCount / total) * 100).toFixed();
-      foodCount = ((foodCount / total) * 100).toFixed();
-      document.querySelector("h2:nth-of-type(1)").innerText = `Animals: ${animalCount}%`;
-      document.querySelector("h2:nth-of-type(2)").innerText = `Food: ${foodCount}%`;
+      const animalPercent = ((animalCount / total) * 100).toFixed();
+      const foodPercent = ((foodCount / total) * 100).toFixed();
+      document.querySelector("h2:nth-of-type(1)").innerText = `Animals: ${animalCount}\n${animalPercent}%`;
+      document.querySelector("h2:nth-of-type(2)").innerText = `Food: ${foodCount}\n${foodPercent}%`;
     };
 
     const renderEntity = (position, diameter, color) => {
