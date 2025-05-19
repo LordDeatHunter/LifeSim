@@ -2,6 +2,7 @@ const socket = new WebSocket("ws://localhost:5000/ws");
 
 let canvas;
 let ctx;
+let reigniteLifeButton;
 
 const lerpDuration = 100;
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -54,10 +55,12 @@ socket.onmessage = (event) => {
     if (id in entities) continue;
     recentlyDespawned[id] = { entity: prevEntities[id], opacity: 1 };
   }
+
   for (const id in entities) {
     if (id in prevEntities) continue;
     recentlySpawned[id] = 0;
   }
+
   const total = animalCount + foodCount;
   const animalPercent = ((animalCount / total) * 100).toFixed();
   const foodPercent = ((foodCount / total) * 100).toFixed();
@@ -67,6 +70,8 @@ socket.onmessage = (event) => {
     `Food: ${foodCount}\n${foodPercent}%`;
   document.querySelector("h1").innerText =
     `Elapsed time: ${getTimeString(data.timeFromStart)}`;
+
+  reigniteLifeButton.disabled = animalCount > 0;
 };
 
 const renderEntity = (position, diameter, color) => {
@@ -134,6 +139,12 @@ const render = () => {
 document.addEventListener("DOMContentLoaded", () => {
   canvas = document.getElementById("view");
   ctx = canvas.getContext("2d");
+  reigniteLifeButton = document.getElementById("reignite-life-button");
+  reigniteLifeButton.addEventListener("click", reigniteLife);
 
   requestAnimationFrame(render);
 });
+
+const reigniteLife = () => {
+  fetch("http://localhost:5000/api/reignite_life");
+};

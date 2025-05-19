@@ -35,12 +35,6 @@ public static class Program
             Chunks[chunkPos] = new Chunk(chunkPos);
         }
 
-        for (var i = 0; i < 500; i++)
-        {
-            var animal = new Animal(new Vector2(RNG.Next(0, 1024), RNG.Next(0, 1024)));
-            Animals[animal.Id] = animal;
-        }
-
         for (var i = 0; i < 400; i++)
         {
             var food = new Food(new Vector2(RNG.Next(0, 1024), RNG.Next(0, 1024)));
@@ -48,6 +42,22 @@ public static class Program
         }
 
         app.UseWebSockets();
+
+        app.Map("/api/reignite_life", _ =>
+        {
+            if (Animals.Count > 0) return Task.CompletedTask;
+
+            var animalCount = RNG.Next(4, 16);
+
+            for (var i = 0; i < animalCount; i++)
+            {
+                var animal = new Animal(new Vector2(RNG.Next(350, 650), RNG.Next(350, 650)));
+                Animals[animal.Id] = animal;
+            }
+
+            return Task.CompletedTask;
+        });
+
         app.Map("/ws", async context =>
         {
             if (!context.WebSockets.IsWebSocketRequest) return;

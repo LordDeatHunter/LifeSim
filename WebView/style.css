@@ -47,3 +47,25 @@ footer {
   color: #cecece;
   padding: 32px 0;
 }
+
+button {
+  background-color: #161616;
+  color: #cecece;
+  border: 1px solid #cecece;
+  border-radius: 16px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+button:hover {
+  background-color: #cecece;
+  color: #161616;
+}
+
+button:disabled {
+  background-color: #161616;
+  color: #686868;
+  border: 1px solid #686868;
+  cursor: not-allowed;
+}
