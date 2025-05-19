@@ -14,8 +14,8 @@ let lastUpdate = performance.now();
 let recentlySpawned = {};
 let recentlyDespawned = {};
 
-const toPaddedNumber = (num, length = 2) =>
-  Math.floor(num).toString().padStart(length, "0");
+const toPaddedNumber = (num, padStart = 2, padEnd = 0) =>
+  Math.floor(num).toString().padStart(padStart, "0").padEnd(padEnd, "0");
 
 const getTimeString = (milliseconds) => {
   const seconds = milliseconds / 1000;
@@ -23,7 +23,7 @@ const getTimeString = (milliseconds) => {
   const hours = minutes / 60;
   const days = hours / 24;
 
-  const remainingStr = toPaddedNumber(milliseconds % 1000, 3);
+  const remainingStr = toPaddedNumber((milliseconds % 1000) / 100, 0, 3);
   const secondsStr = toPaddedNumber(seconds % 60);
   const minutesStr = toPaddedNumber(minutes % 60);
   const hoursStr = toPaddedNumber(hours % 60);
@@ -38,6 +38,11 @@ socket.onmessage = (event) => {
 
   let animalCount = 0;
   let foodCount = 0;
+
+  const clientCount = data.activeClients;
+
+  document.querySelector("h3").innerText =
+    (clientCount == 1) ? `${clientCount} viewer` : `${clientCount} viewers`;
 
   prevEntities = { ...entities };
   entities = {};
@@ -64,12 +69,15 @@ socket.onmessage = (event) => {
   const total = animalCount + foodCount;
   const animalPercent = ((animalCount / total) * 100).toFixed();
   const foodPercent = ((foodCount / total) * 100).toFixed();
-  document.querySelector("h2:nth-of-type(1)").innerText =
-    `Animals: ${animalCount}\n${animalPercent}%`;
-  document.querySelector("h2:nth-of-type(2)").innerText =
-    `Food: ${foodCount}\n${foodPercent}%`;
-  document.querySelector("h1").innerText =
-    `Elapsed time: ${getTimeString(data.timeFromStart)}`;
+  document.querySelector(
+    "h2:nth-of-type(1)"
+  ).innerText = `Animals: ${animalCount}\n${animalPercent}%`;
+  document.querySelector(
+    "h2:nth-of-type(2)"
+  ).innerText = `Food: ${foodCount}\n${foodPercent}%`;
+  document.querySelector("h1").innerText = `Elapsed time: ${getTimeString(
+    data.timeFromStart
+  )}`;
 
   reigniteLifeButton.disabled = animalCount > 0;
 };
