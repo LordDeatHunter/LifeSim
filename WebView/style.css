@@ -69,3 +69,14 @@ button:disabled {
   border: 1px solid #686868;
   cursor: not-allowed;
 }
+
+a {
+  color: #6868ce;
+  text-decoration: none;
+  transition: all 0.2s ease-in-out;
+}
+
+a:hover {
+  text-decoration: underline;
+  color: #8295f1;
+}
