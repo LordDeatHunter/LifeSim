@@ -55,29 +55,21 @@ public class Animal : Entity
         var prevPosition = Position;
         var prevChunkPosition = prevPosition.ToChunkPosition();
 
-        if (_target == null || _target.MarkedForDeletion)
+        var needFood = Saturation < 5;
+
+        if (_target == null || _target.MarkedForDeletion || (_target is Animal && needFood))
         {
-            _target = Saturation >= 15 && ReproductionCooldown >= MaxReproductionCooldown 
+            _target = CanReproduce(15) && !needFood
                 ? FindNearestAnimal()
                 : FindNearestFood();
         }
 
-        if (_target is Animal && Saturation < 5)
-        {
-            _target = FindNearestFood();
-        }
-
         if (_target != null)
         {
-            var direction = Vector2.Normalize(_target.Position - prevPosition);
-            if (float.IsNaN(direction.X) || float.IsNaN(direction.Y))
-            {
-                direction = Vector2.Zero;
-            }
-            else
-            {
-                direction = Vector2.Normalize(direction);
-            }
+            var toTarget = _target.Position - prevPosition;
+            var direction = toTarget.LengthSquared() > 0
+                ? Vector2.Normalize(toTarget)
+                : Vector2.Zero;
 
             Position += direction * Speed * deltaTime;
         }
@@ -103,7 +95,7 @@ public class Animal : Entity
 
     private Food? FindNearestFood() => Program.Foods.Values.Where(f => !f.MarkedForDeletion).OrderBy(f => Vector2.Distance(Position, f.Position)).FirstOrDefault();
     private Animal? FindNearestAnimal() => Program.Animals.Values
-        .Where(a => !a.MarkedForDeletion && a != this && CanMate(this, a))
+        .Where(CanMate)
         .OrderBy(a => Vector2.Distance(Position, a.Position))
         .FirstOrDefault();
 
@@ -119,7 +111,8 @@ public class Animal : Entity
     private void HandleReproductionTarget()
     {
         if (_target is not Animal animal || animal == this) return;
-        if (!CanMate(this, animal)) return;
+        if (!CanMate(animal)) return;
+        if (Vector2.Distance(Position, animal.Position) > 16F) return;
 
         Saturation -= 5;
         animal.Saturation -= 5;
@@ -134,9 +127,9 @@ public class Animal : Entity
         _target = null;
     }
 
-    public static bool CanMate(Animal a, Animal b) => a.CanReproduce() && b.CanReproduce() && Vector2.Distance(a.Position, b.Position) <= 32F && MathF.Abs(a.Size - b.Size) < 8F;
+    public bool CanMate(Animal animal) => this != animal && CanReproduce() && animal.CanReproduce() && MathF.Abs(Size - animal.Size) < 8F;
 
-    public bool CanReproduce() => !MarkedForDeletion && Saturation >= 5 && ReproductionCooldown >= MaxReproductionCooldown;
+    public bool CanReproduce(float requiredSaturation = 5F) => !MarkedForDeletion && Saturation >= requiredSaturation && ReproductionCooldown >= MaxReproductionCooldown;
 
     private void HandleCollision()
     {
