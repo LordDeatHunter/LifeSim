@@ -185,7 +185,11 @@ public class Animal : Entity
 
         var position = (Position + animal.Position) / 2;
         var foodType = FoodTypeExtensions.GetRandomForOffspring(this, animal);
-        var size = (Size + animal.Size) / 2 + Program.RNG.NextSingle() * 4 - 2 + (foodType == FoodType.CARNIVORE ? 2 : 0);
+        var size = (Size + animal.Size) / 2 + Program.RNG.NextSingle() * 4 - 2;
+        if (foodType == FoodType.CARNIVORE && FoodType != FoodType.HERBIVORE && animal.FoodType != FoodType.HERBIVORE)
+        {
+            size += Program.RNG.NextSingle() * 4 - 2;
+        }
         var color = GetOffspringColor(animal);
 
         var newAnimal = new Animal(position, size, color)
