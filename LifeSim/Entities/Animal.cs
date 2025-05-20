@@ -94,7 +94,7 @@ public class Animal : Entity
         var s2 = other.Color.GetSaturation();
         var l2 = other.Color.GetBrightness();
 
-        var h = (h1 + h2) * 0.5F + (Program.RNG.NextSingle() * 20 - 10);
+        var h = (h1 + h2) * 0.5F + (Program.RNG.NextSingle() * 10 - 5);
         h = (h % 360 + 360) % 360;
 
         var s = (s1 + s2) * 0.5F + (Program.RNG.NextSingle() * 0.2F - 0.1F);
