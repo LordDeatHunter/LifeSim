@@ -104,7 +104,7 @@ public static class Program
                     entity.Update(delta);
                 }
 
-                var entityDTOs = AllEntities.Values.Select(e => new EntityDTO(
+                var foodDTOs = Foods.Values.Select(e => new FoodDto(
                     e.GetType().Name,
                     e.Id.ToString(),
                     e.Position.X,
@@ -112,13 +112,23 @@ public static class Program
                     e.Color.ToHex(),
                     e.Size
                 ));
+                var animalDTOs = Animals.Values.Select(e => new AnimalDto(
+                    e.GetType().Name,
+                    e.Id.ToString(),
+                    e.Position.X,
+                    e.Position.Y,
+                    e.Color.ToHex(),
+                    e.Size,
+                    e.FoodType
+                ));
 
                 var timeFromStart = stopwatch.Elapsed.TotalMilliseconds;
                 var activeClients = Clients.Keys.Where(c => c.State == WebSocketState.Open).ToList();
 
                 var payload = new
                 {
-                    entities = entityDTOs,
+                    animals = animalDTOs,
+                    foods = foodDTOs,
                     timeFromStart,
                     activeClients = activeClients.Count
                 };

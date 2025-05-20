@@ -33,27 +33,23 @@ const getTimeString = (milliseconds) => {
 };
 
 socket.onmessage = (event) => {
-  const data = JSON.parse(event.data);
+  const { animals, foods, activeClients, timeFromStart } = JSON.parse(
+    event.data,
+  );
   lastUpdate = performance.now();
 
-  let animalCount = 0;
-  let foodCount = 0;
-
-  const clientCount = data.activeClients;
+  const animalCount = animals.length;
+  const foodCount = foods.length;
 
   document.querySelector("h3").innerText =
-    (clientCount == 1) ? `${clientCount} viewer` : `${clientCount} viewers`;
+    activeClients === 1
+      ? `${activeClients} viewer`
+      : `${activeClients} viewers`;
 
   prevEntities = { ...entities };
   entities = {};
-  for (const entity of data.entities) {
+  for (const entity of [...animals, ...foods]) {
     entities[entity.id] = entity;
-
-    if (entity.type === "Animal") {
-      animalCount++;
-    } else if (entity.type === "Food") {
-      foodCount++;
-    }
   }
 
   for (const id in prevEntities) {
@@ -69,24 +65,26 @@ socket.onmessage = (event) => {
   const total = animalCount + foodCount;
   const animalPercent = ((animalCount / total) * 100).toFixed();
   const foodPercent = ((foodCount / total) * 100).toFixed();
-  document.querySelector(
-    "h2:nth-of-type(1)"
-  ).innerText = `Animals: ${animalCount}\n${animalPercent}%`;
-  document.querySelector(
-    "h2:nth-of-type(2)"
-  ).innerText = `Food: ${foodCount}\n${foodPercent}%`;
-  document.querySelector("h1").innerText = `Elapsed time: ${getTimeString(
-    data.timeFromStart
-  )}`;
+  document.querySelector("h2:nth-of-type(1)").innerText =
+    `Animals: ${animalCount}\n${animalPercent}%`;
+  document.querySelector("h2:nth-of-type(2)").innerText =
+    `Food: ${foodCount}\n${foodPercent}%`;
+  document.querySelector("h1").innerText =
+    `Elapsed time: ${getTimeString(timeFromStart)}`;
 
   reigniteLifeButton.disabled = animalCount > 0;
 };
 
-const renderEntity = (position, diameter, color) => {
+const renderEntity = (position, diameter, color, outline) => {
   ctx.beginPath();
   ctx.arc(position.x, position.y, diameter / 2, 0, Math.PI * 2);
   ctx.fillStyle = color;
   ctx.fill();
+
+  if (!outline) return;
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = outline;
+  ctx.stroke();
 };
 
 const render = () => {
@@ -118,7 +116,21 @@ const render = () => {
         .padStart(2, "0");
     const size = curr.size;
 
-    renderEntity({ x, y }, size, color);
+    let outline;
+    if (curr.type === "Animal") {
+      switch (curr.foodType) {
+        case 1:
+          outline = "#00FF00";
+          break;
+        case 2:
+          outline = "#FF0000";
+          break;
+        default:
+          outline = "#FFFFFF";
+      }
+    }
+
+    renderEntity({ x, y }, size, color, outline);
   }
 
   for (const id in recentlyDespawned) {
@@ -130,15 +142,29 @@ const render = () => {
     }
 
     const { x, y, size } = entity;
-    const color =
-      entity.color +
-      Math.floor(opacity * 255)
-        .toString(16)
-        .padStart(2, "0");
+    const alpha = Math.floor(opacity * 255)
+      .toString(16)
+      .padStart(2, "0");
+    const color = entity.color + alpha;
 
     recentlyDespawned[id].opacity -= 0.03 * t;
 
-    renderEntity({ x, y }, size, color);
+    let outline;
+    if (entity.type === "Animal") {
+      switch (entity.foodType) {
+        case 1:
+          outline = "#00FF00";
+          break;
+        case 2:
+          outline = "#FF0000";
+          break;
+        default:
+          outline = "#FFFFFF";
+      }
+      outline += alpha;
+    }
+
+    renderEntity({ x, y }, size, color, outline);
   }
 
   requestAnimationFrame(render);
