@@ -86,11 +86,24 @@ public class Animal : Entity
 
     private Color GetOffspringColor(Animal other)
     {
-        var r = int.Clamp((int)((Color.R + other.Color.R) / 2F + Program.RNG.Next(-20, 20)), 0, 255);
-        var g = int.Clamp((int)((Color.G + other.Color.G) / 2F + Program.RNG.Next(-20, 20)), 0, 255);
-        var b = int.Clamp((int)((Color.B + other.Color.B) / 2F + Program.RNG.Next(-20, 20)), 0, 255);
-        
-        return Color.FromArgb(r, g, b);
+        var h1 = Color.GetHue();
+        var s1 = Color.GetSaturation();
+        var l1 = Color.GetBrightness();
+
+        var h2 = other.Color.GetHue();
+        var s2 = other.Color.GetSaturation();
+        var l2 = other.Color.GetBrightness();
+
+        var h = (h1 + h2) * 0.5F + (Program.RNG.NextSingle() * 20 - 10);
+        h = (h % 360 + 360) % 360;
+
+        var s = (s1 + s2) * 0.5F + (Program.RNG.NextSingle() * 0.2F - 0.1F);
+        s = Math.Clamp(s, 0.75F, 1F);
+
+        var l = (l1 + l2) * 0.5F + (Program.RNG.NextSingle() * 0.2F - 0.1F);
+        l = Math.Clamp(l, 0.35F, 0.65F);
+
+        return ColorUtils.ColorFromHsla(h, s, l, 1F);
     }
 
     private Food? FindNearestFood() => Program.Foods.Values.Where(f => !f.MarkedForDeletion).OrderBy(f => Vector2.Distance(Position, f.Position)).FirstOrDefault();
