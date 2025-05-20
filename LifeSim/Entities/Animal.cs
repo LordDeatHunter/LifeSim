@@ -11,6 +11,7 @@ public class Animal : Entity
     private Entity? _target;
     private readonly float _maxSaturation = 20f;
     private float _currentSaturation = 10f;
+
     private float MaxReproductionCooldown =>
         FoodType switch
         {
@@ -19,12 +20,15 @@ public class Animal : Entity
             FoodType.OMNIVORE => 8F,
             _ => 5F
         };
+
     private float _reproductionCooldown;
+
     private float ReproductionCooldown
     {
         get => _reproductionCooldown;
-        set => _reproductionCooldown = float.Clamp(value, 0F, MaxReproductionCooldown);
+        set => _reproductionCooldown = float.Max(value, 0F);
     }
+
     public float Saturation
     {
         get => _currentSaturation;
@@ -34,6 +38,7 @@ public class Animal : Entity
             if (_currentSaturation <= 0) MarkForDeletion();
         }
     }
+
     public float HungerRate { get; } = 2F;
     public FoodType FoodType { get; private init; } = FoodType.HERBIVORE;
 
@@ -48,9 +53,13 @@ public class Animal : Entity
 
         HungerRate *= 1 / MathF.Sqrt(Size);
         _maxSaturation += Program.RNG.NextSingle() * 10F;
+
+        Speed *= 1F / MathF.Pow(2F, 0.4F) * 2F;
     }
 
-    public Animal(Vector2 position) : this(position, 8F, Color.CornflowerBlue) { }
+    public Animal(Vector2 position) : this(position, 8F, Color.CornflowerBlue)
+    {
+    }
 
     public override void Update(float deltaTime)
     {
@@ -64,7 +73,7 @@ public class Animal : Entity
         var prevPosition = Position;
         var prevChunkPosition = prevPosition.ToChunkPosition();
 
-        var needFood = Saturation < 5;
+        var needFood = Saturation < (FoodType == FoodType.HERBIVORE ? 5 : 10);
 
         if (_target == null || _target.MarkedForDeletion || (_target is Animal && needFood))
         {
@@ -114,47 +123,43 @@ public class Animal : Entity
 
         return ColorUtils.ColorFromHsla(h, s, l, 1F);
     }
-    
+
     private Entity? FindNearestFood()
     {
         return FoodType switch
         {
             FoodType.HERBIVORE => FindNearestPlant(),
-            FoodType.CARNIVORE => FindNearestHerbivoreOrOmnivore(),
+            FoodType.CARNIVORE => FindNearestPrey(),
             FoodType.OMNIVORE => FindNearestFoodEntity(),
             _ => null
         };
     }
 
-    private Food? FindNearestPlant() => Program.Foods.Values.Where(f => !f.MarkedForDeletion).OrderBy(f => Vector2.Distance(Position, f.Position)).FirstOrDefault();
+    private Food? FindNearestPlant() => Program.Foods.Values.Where(f => !f.MarkedForDeletion)
+        .OrderBy(f => Vector2.Distance(Position, f.Position)).FirstOrDefault();
 
     private Animal? FindNearestMate() => Program.Animals.Values
         .Where(CanMate)
         .OrderBy(a => Vector2.Distance(Position, a.Position))
         .FirstOrDefault();
 
-    private Animal? FindNearestHerbivoreOrOmnivore() => Program.Animals.Values
-        .Where(a => a != this && a.FoodType is FoodType.HERBIVORE or FoodType.OMNIVORE && !a.MarkedForDeletion)
-        .OrderBy(a => Vector2.Distance(Position, a.Position))
-        .FirstOrDefault();
-
-    private Animal? FindNearestHerbivore() => Program.Animals.Values
-        .Where(a => a != this && a is { FoodType: FoodType.HERBIVORE, MarkedForDeletion: false })
+    private Animal? FindNearestPrey() => Program.Animals.Values
+        .Where(CanEatAnimal)
         .OrderBy(a => Vector2.Distance(Position, a.Position))
         .FirstOrDefault();
 
     private Entity? FindNearestFoodEntity()
     {
         var nearestPlant = FindNearestPlant();
-        var nearestHerbivore = FindNearestHerbivore();
+        var nearestPrey = FindNearestPrey();
 
-        if (nearestPlant == null && nearestHerbivore == null) return null;
-        if (nearestPlant == null) return nearestHerbivore;
-        if (nearestHerbivore == null) return nearestPlant;
+        if (nearestPlant == null && nearestPrey == null) return null;
+        if (nearestPlant == null) return nearestPrey;
+        if (nearestPrey == null) return nearestPlant;
 
-        return Vector2.Distance(Position, nearestPlant.Position) < Vector2.Distance(Position, nearestHerbivore.Position)
+        return Vector2.Distance(Position, nearestPlant.Position) < Vector2.Distance(Position, nearestPrey.Position)
             ? nearestPlant
-            : nearestHerbivore;
+            : nearestPrey;
     }
 
     public override void MarkForDeletion()
@@ -170,21 +175,22 @@ public class Animal : Entity
     {
         if (_target is not Animal animal || animal == this) return;
         if (!CanMate(animal)) return;
-        if (Vector2.Distance(Position, animal.Position) > 16F) return;
+        if (Vector2.Distance(Position, animal.Position) > (Size + animal.Size + 4F) / 2F) return;
 
         Saturation -= FoodType == FoodType.HERBIVORE ? 2 : 5;
-        animal.Saturation -= FoodType == FoodType.HERBIVORE ? 2 : 5;
-        
+        animal.Saturation -= animal.FoodType == FoodType.HERBIVORE ? 2 : 5;
+
         ReproductionCooldown = 0;
         animal.ReproductionCooldown = 0;
 
         var position = (Position + animal.Position) / 2;
-        var size = (Size + animal.Size) / 2 + Program.RNG.NextSingle() * 4 - 2;
+        var foodType = FoodTypeExtensions.GetRandomForOffspring(this, animal);
+        var size = (Size + animal.Size) / 2 + Program.RNG.NextSingle() * 4 - 2 + (foodType == FoodType.CARNIVORE ? 2 : 0);
         var color = GetOffspringColor(animal);
 
         var newAnimal = new Animal(position, size, color)
         {
-            FoodType = FoodTypeExtensions.GetRandomForOffspring(this, animal)
+            FoodType = foodType,
         };
 
         Program.Animals[newAnimal.Id] = newAnimal;
@@ -192,30 +198,34 @@ public class Animal : Entity
         _target = null;
     }
 
-    public bool CanMate(Animal animal) => this != animal && CanReproduce() && animal.CanReproduce() && MathF.Abs(Size - animal.Size) < 8F && AreCompatible(animal);
+    public bool CanMate(Animal animal) => this != animal && CanReproduce() && animal.CanReproduce() &&
+                                          MathF.Abs(Size - animal.Size) < 8F && AreCompatible(animal);
 
-    public bool CanReproduce(float requiredSaturation = 5F) => !MarkedForDeletion && Saturation >= requiredSaturation && ReproductionCooldown >= MaxReproductionCooldown;
+    public bool CanReproduce(float requiredSaturation = 5F) => !MarkedForDeletion && Saturation >= requiredSaturation &&
+                                                               ReproductionCooldown >= MaxReproductionCooldown;
 
-    public bool AreCompatible(Animal animal) => FoodType == animal.FoodType || FoodType == FoodType.OMNIVORE || animal.FoodType == FoodType.OMNIVORE;
+    public bool AreCompatible(Animal animal) => FoodType == animal.FoodType || FoodType == FoodType.OMNIVORE ||
+                                                animal.FoodType == FoodType.OMNIVORE;
 
     private void HandleCollision()
     {
         var chunkPosition = Position.ToChunkPosition();
-        for(var i = -1; i <= 1; i++)
-        for(var j = -1; j <= 1; j++)
+        for (var i = -1; i <= 1; i++)
+        for (var j = -1; j <= 1; j++)
         {
             var newChunkPos = new Vector2(chunkPosition.X + i, chunkPosition.Y + j);
             if (!Program.Chunks.TryGetValue(newChunkPos, out var chunk)) continue;
             foreach (var animal in chunk.Animals.Where(animal => animal != this).Where(IsColliding))
             {
-                if ((FoodType == FoodType.CARNIVORE && animal.FoodType != FoodType.CARNIVORE) ||
-                    (FoodType == FoodType.OMNIVORE && animal.FoodType == FoodType.HERBIVORE))
+                if (CanEatAnimal(animal))
                 {
                     Consume(animal);
                     continue;
                 }
+
                 PushAway(animal);
             }
+
             foreach (var food in chunk.Food.Where(IsColliding))
             {
                 Consume(food);
@@ -243,4 +253,10 @@ public class Animal : Entity
             _target = null;
         }
     }
+
+    private bool CanEatAnimal(Animal animal) => animal != this && !animal.MarkedForDeletion && Size > animal.Size &&
+                                                ((FoodType == FoodType.CARNIVORE &&
+                                                  animal.FoodType != FoodType.CARNIVORE) ||
+                                                 (FoodType == FoodType.OMNIVORE &&
+                                                  animal.FoodType == FoodType.HERBIVORE));
 }
