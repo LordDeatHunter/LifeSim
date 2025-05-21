@@ -14,36 +14,6 @@ let lastUpdate = performance.now();
 let recentlySpawned = {};
 let recentlyDespawned = {};
 
-const toPaddedNumber = (num, padStart = 2, padEnd = 0) =>
-  Math.floor(num).toString().padStart(padStart, "0").padEnd(padEnd, "0");
-
-const getTimeString = (milliseconds) => {
-  const seconds = milliseconds / 1000;
-  const minutes = seconds / 60;
-  const hours = minutes / 60;
-  const days = hours / 24;
-
-  const remainingStr = toPaddedNumber((milliseconds % 1000) / 100, 0, 3);
-  const secondsStr = toPaddedNumber(seconds % 60);
-  const minutesStr = toPaddedNumber(minutes % 60);
-  const hoursStr = toPaddedNumber(hours % 60);
-  const daysStr = toPaddedNumber(days % 24);
-
-  return `${daysStr}d ${hoursStr}h ${minutesStr}m ${secondsStr}s ${remainingStr}ms`;
-};
-
-const getOutlineColor = (entity) => {
-  if (entity.type !== "Animal") return undefined;
-  switch (entity.foodType) {
-    case "HERBIVORE":
-      return "#309898";
-    case "CARNIVORE":
-      return "#cb0404";
-    default:
-      return "#ffaf2e";
-  }
-};
-
 socket.onmessage = (event) => {
   const { animals, foods, activeClients, timeFromStart } = JSON.parse(
     event.data,
@@ -152,14 +122,10 @@ const render = () => {
 
     const x = lerp(prev.x, curr.x, t);
     const y = lerp(prev.y, curr.y, t);
-    const color =
-      curr.color +
-      Math.floor(opacity * 255)
-        .toString(16)
-        .padStart(2, "0");
+    const color = appendAlpha(curr.color, opacity);
     const size = curr.size;
 
-    let outline = getOutlineColor(curr);
+    let outline = appendAlpha(getOutlineColor(curr), opacity);
 
     renderEntity({ x, y }, size, outline ?? color, outline);
   }
@@ -173,17 +139,13 @@ const render = () => {
     }
 
     const { x, y, size } = entity;
-    const alpha = Math.floor(opacity * 255)
-      .toString(16)
-      .padStart(2, "0");
-    const color = entity.color + alpha;
+    const color = appendAlpha(entity.color, opacity);
 
     recentlyDespawned[id].opacity -= 0.03 * t;
 
     let outline;
-    if (entity.type === "Animal") {
-      outline = getOutlineColor(entity);
-      outline += alpha;
+    if (entity.type === "animal") {
+      outline = appendAlpha(getOutlineColor(entity), opacity);
     }
     renderEntity({ x, y }, size, outline ?? color, outline);
   }

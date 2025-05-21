@@ -21,5 +21,5 @@ public class Food : Entity
         Program.Foods.Remove(Id);
     }
 
-    public override IEntityDto ToDTO() => new FoodDto("Food", Id.ToString(), Position.X, Position.Y, Color.ToHex(), Size);
+    public override IEntityDto ToDTO() => new FoodDto("food", Id.ToString(), Position.X, Position.Y, Color.ToHex(), Size);
 }

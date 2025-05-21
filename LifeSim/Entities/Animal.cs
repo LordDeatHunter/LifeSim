@@ -269,5 +269,5 @@ public class Animal : Entity
                                                  (FoodType == FoodType.OMNIVORE &&
                                                   animal.FoodType == FoodType.HERBIVORE));
     
-    public override IEntityDto ToDTO() => new AnimalDto("Animal", Id.ToString(), Position.X, Position.Y, Color.ToHex(), Size, FoodType.ToString());
+    public override IEntityDto ToDTO() => new AnimalDto("animal", Id.ToString(), Position.X, Position.Y, Color.ToHex(), Size, FoodType.ToString());
 }
