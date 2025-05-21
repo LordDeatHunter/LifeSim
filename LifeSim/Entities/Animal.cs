@@ -39,19 +39,17 @@ public class Animal : Entity
         }
     }
 
-    public float HungerRate { get; } = 2F;
+    public float HungerRate { get; } = 0.4F;
     public FoodType FoodType { get; private init; } = FoodType.HERBIVORE;
 
     private Animal(Vector2 position, float size, Color color) : base(position, color, size)
     {
-        Size = size;
-
         Program.Chunks[position.ToChunkPosition()].Animals.Add(this);
 
         var lifespan = 24F + Program.RNG.NextSingle() * 16F + Size / 4F;
         Components.Add(new LifespanComponent(lifespan));
 
-        HungerRate *= 1 / MathF.Sqrt(Size);
+        HungerRate *= MathF.Sqrt(Size);
         _maxSaturation += Program.RNG.NextSingle() * 10F;
 
         Speed *= 1F / MathF.Pow(Size, 0.4F) * 2.5F;
@@ -188,8 +186,9 @@ public class Animal : Entity
         var size = (Size + animal.Size) / 2 + Program.RNG.NextSingle() * 4 - 2;
         if (foodType == FoodType.CARNIVORE && FoodType != FoodType.HERBIVORE && animal.FoodType != FoodType.HERBIVORE)
         {
-            size += Program.RNG.NextSingle() * 4 - 2;
+            size += Program.RNG.NextSingle() * 2;
         }
+
         var color = GetOffspringColor(animal);
 
         var newAnimal = new Animal(position, size, color)
