@@ -75,9 +75,14 @@ public class Animal : Entity
 
         if (_target == null || _target.MarkedForDeletion || (_target is Animal && needFood))
         {
-            _target = CanReproduce(FoodType == FoodType.HERBIVORE ? 10 : 15) && !needFood
+            _target = CanReproduce(14) && !needFood
                 ? FindNearestMate()
                 : FindNearestFood();
+
+            if (_target is Animal animal)
+            {
+                animal._target = this;
+            }
         }
 
         if (_target != null)
@@ -184,7 +189,7 @@ public class Animal : Entity
         var position = (Position + animal.Position) / 2;
         var foodType = FoodTypeExtensions.GetRandomForOffspring(this, animal);
         var size = (Size + animal.Size) / 2 + Program.RNG.NextSingle() * 4 - 2;
-        if (foodType == FoodType.CARNIVORE && FoodType != FoodType.HERBIVORE && animal.FoodType != FoodType.HERBIVORE)
+        if (foodType == FoodType.CARNIVORE && (FoodType != FoodType.CARNIVORE || animal.FoodType != FoodType.CARNIVORE))
         {
             size += Program.RNG.NextSingle() * 2;
         }
