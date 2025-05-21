@@ -1,6 +1,7 @@
 using System.Drawing;
 using System.Numerics;
 using LifeSim.Components;
+using LifeSim.Data;
 
 namespace LifeSim.Entities;
 
@@ -24,4 +25,6 @@ public abstract class Entity(Vector2 position, Color color, float size = 8F)
     {
         MarkedForDeletion = true;
     }
+
+    public abstract IEntityDto ToDTO();
 }

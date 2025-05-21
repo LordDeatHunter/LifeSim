@@ -1,5 +1,6 @@
 ﻿using System.Drawing;
 using System.Numerics;
+using LifeSim.Data;
 
 namespace LifeSim.Entities;
 
@@ -18,4 +19,6 @@ public class Food : Entity
         Program.Chunks[Position.ToChunkPosition()].Food.Remove(this);
         Program.Foods.Remove(Id);
     }
+
+    public override IEntityDto ToDTO() => new FoodDto("food", Id.ToString(), Position.X, Position.Y, Color.ToHex(), Size);
 }

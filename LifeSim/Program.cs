@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.Net.WebSockets;
 using System.Numerics;
 using System.Text.Json;
-using LifeSim.Data;
 using LifeSim.Entities;
 using LifeSim.World;
 
@@ -103,23 +102,8 @@ public static class Program
                     entity.Update(delta);
                 }
 
-                var foodDTOs = Foods.Values.Select(e => new FoodDto(
-                    e.GetType().Name,
-                    e.Id.ToString(),
-                    e.Position.X,
-                    e.Position.Y,
-                    e.Color.ToHex(),
-                    e.Size
-                ));
-                var animalDTOs = Animals.Values.Select(e => new AnimalDto(
-                    e.GetType().Name,
-                    e.Id.ToString(),
-                    e.Position.X,
-                    e.Position.Y,
-                    e.Color.ToHex(),
-                    e.Size,
-                    e.FoodType.ToString()
-                ));
+                var foodDTOs = Foods.Values.Select(f => f.ToDTO());
+                var animalDTOs = Animals.Values.Select(a => a.ToDTO());
 
                 var timeFromStart = stopwatch.Elapsed.TotalMilliseconds;
                 var activeClients = Clients.Keys.Where(c => c.State == WebSocketState.Open).ToList();
