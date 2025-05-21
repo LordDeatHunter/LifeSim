@@ -1,16 +1,15 @@
-using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net.WebSockets;
 using System.Numerics;
 using System.Text.Json;
 using LifeSim.Entities;
+using LifeSim.Network;
 using LifeSim.World;
 
 namespace LifeSim;
 
 public static class Program
 {
-    public static ConcurrentDictionary<WebSocket, byte> Clients = new();
     public static Random RNG = new();
     public static Dictionary<Guid, Food> Foods = new();
     public static Dictionary<Guid, Animal> Animals = new();
@@ -23,6 +22,8 @@ public static class Program
 
     public static void Main(string[] args)
     {
+        SocketLogic socketLogic = new();
+        
         var builder = WebApplication.CreateBuilder(args);
         var app = builder.Build();
 
@@ -56,33 +57,7 @@ public static class Program
             return Task.CompletedTask;
         });
 
-        app.Map("/ws", async context =>
-        {
-            if (!context.WebSockets.IsWebSocketRequest) return;
-
-            using var ws = await context.WebSockets.AcceptWebSocketAsync();
-            Clients.TryAdd(ws, 0);
-
-            var buffer = new byte[1];
-
-            try
-            {
-                while (ws.State == WebSocketState.Open)
-                {
-                    var result = await ws.ReceiveAsync(buffer, CancellationToken.None);
-                    if (result.MessageType == WebSocketMessageType.Close) break;
-                    await Task.Delay(1000);
-                }
-            }
-            catch
-            { /* ignore */ }
-            finally
-            {
-                Clients.TryRemove(ws, out _);
-                if (ws.State is not (WebSocketState.Closed or WebSocketState.Aborted))
-                    await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Inactive socket cleanup.", CancellationToken.None);
-            }
-        });
+        app.Map("/ws", socketLogic.HandleWebSocket);
 
         _ = Task.Run(async () =>
         {
@@ -106,7 +81,7 @@ public static class Program
                 var animalDTOs = Animals.Values.Select(a => a.ToDTO());
 
                 var timeFromStart = stopwatch.Elapsed.TotalMilliseconds;
-                var activeClients = Clients.Keys.Where(c => c.State == WebSocketState.Open).ToList();
+                var activeClients = socketLogic.Clients.Keys.Where(c => c.State == WebSocketState.Open).ToList();
 
                 var payload = new
                 {
