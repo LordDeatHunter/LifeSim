@@ -118,7 +118,7 @@ public static class Program
                     e.Position.Y,
                     e.Color.ToHex(),
                     e.Size,
-                    e.FoodType
+                    e.FoodType.ToString()
                 ));
 
                 var timeFromStart = stopwatch.Elapsed.TotalMilliseconds;

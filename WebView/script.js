@@ -32,14 +32,35 @@ const getTimeString = (milliseconds) => {
   return `${daysStr}d ${hoursStr}h ${minutesStr}m ${secondsStr}s ${remainingStr}ms`;
 };
 
+const getOutlineColor = (entity) => {
+  if (entity.type !== "Animal") return undefined;
+  switch (entity.foodType) {
+    case "HERBIVORE":
+      return "#00FF00";
+    case "CARNIVORE":
+      return "#FF0000";
+    default:
+      return "#FFFFFF";
+  }
+};
+
 socket.onmessage = (event) => {
   const { animals, foods, activeClients, timeFromStart } = JSON.parse(
-    event.data,
+    event.data
   );
   lastUpdate = performance.now();
 
   const animalCount = animals.length;
   const foodCount = foods.length;
+  let animalCounts = {
+    HERBIVORE: 0,
+    CARNIVORE: 0,
+    OMNIVORE: 0,
+  };
+
+  for (const animal of animals) {
+    animalCounts[animal.foodType] += 1;
+  }
 
   document.querySelector("h3").innerText =
     activeClients === 1
@@ -65,12 +86,36 @@ socket.onmessage = (event) => {
   const total = animalCount + foodCount;
   const animalPercent = ((animalCount / total) * 100).toFixed();
   const foodPercent = ((foodCount / total) * 100).toFixed();
-  document.querySelector("h2:nth-of-type(1)").innerText =
-    `Animals: ${animalCount}\n${animalPercent}%`;
-  document.querySelector("h2:nth-of-type(2)").innerText =
-    `Food: ${foodCount}\n${foodPercent}%`;
-  document.querySelector("h1").innerText =
-    `Elapsed time: ${getTimeString(timeFromStart)}`;
+  document.querySelector(
+    "h2:nth-of-type(1)"
+  ).innerText = `Animals: ${animalCount}\n${animalPercent}% `;
+  document.querySelector(
+    "h2:nth-of-type(2)"
+  ).innerText = `Food: ${foodCount}\n${foodPercent}%`;
+  const animalFoodTypeElements = document.querySelectorAll(
+    ".animal-type-display"
+  );
+
+  let animalCountsPercentage = {};
+
+  if (animalCount === 0) {
+    animalCountsPercentage = animalCounts;
+  } else {
+    for (let type in animalCounts) {
+      animalCountsPercentage[type] = (
+        (animalCounts[type] / animalCount) *
+        100
+      ).toFixed(1);
+    }
+  }
+
+  animalFoodTypeElements[0].innerText = `Herbivores: ${animalCounts["HERBIVORE"]} \n ${animalCountsPercentage["HERBIVORE"]}%`;
+  animalFoodTypeElements[1].innerText = `Carnivores: ${animalCounts["CARNIVORE"]} \n ${animalCountsPercentage["CARNIVORE"]}%`;
+  animalFoodTypeElements[2].innerText = `Omnivores: ${animalCounts["OMNIVORE"]} \n ${animalCountsPercentage["OMNIVORE"]}%`;
+
+  document.querySelector("h1").innerText = `Elapsed time: ${getTimeString(
+    timeFromStart
+  )}`;
 
   reigniteLifeButton.disabled = animalCount > 0;
 };
@@ -116,19 +161,7 @@ const render = () => {
         .padStart(2, "0");
     const size = curr.size;
 
-    let outline;
-    if (curr.type === "Animal") {
-      switch (curr.foodType) {
-        case 1:
-          outline = "#00FF00";
-          break;
-        case 2:
-          outline = "#FF0000";
-          break;
-        default:
-          outline = "#FFFFFF";
-      }
-    }
+    let outline = getOutlineColor(curr);
 
     renderEntity({ x, y }, size, color, outline);
   }
@@ -151,19 +184,9 @@ const render = () => {
 
     let outline;
     if (entity.type === "Animal") {
-      switch (entity.foodType) {
-        case 1:
-          outline = "#00FF00";
-          break;
-        case 2:
-          outline = "#FF0000";
-          break;
-        default:
-          outline = "#FFFFFF";
-      }
+      outline = getOutlineColor(entity);
       outline += alpha;
     }
-
     renderEntity({ x, y }, size, color, outline);
   }
 
