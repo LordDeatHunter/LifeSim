@@ -2,6 +2,7 @@
 using System.Numerics;
 using LifeSim.Components;
 using LifeSim.Data;
+using LifeSim.Utils;
 
 namespace LifeSim.Entities;
 
@@ -46,11 +47,11 @@ public class Animal : Entity
     {
         Program.Chunks[position.ToChunkPosition()].Animals.Add(this);
 
-        var lifespan = 24F + Program.RNG.NextSingle() * 16F + Size / 4F;
+        var lifespan = 24F + RandomUtils.RNG.NextSingle() * 16F + Size / 4F;
         Components.Add(new LifespanComponent(lifespan));
 
         HungerRate *= MathF.Sqrt(Size);
-        _maxSaturation += Program.RNG.NextSingle() * 10F;
+        _maxSaturation += RandomUtils.RNG.NextSingle() * 10F;
 
         Speed *= 1F / MathF.Pow(Size, 0.4F) * 2.5F;
     }
@@ -115,13 +116,13 @@ public class Animal : Entity
         var s2 = other.Color.GetSaturation();
         var l2 = other.Color.GetBrightness();
 
-        var h = (h1 + h2) * 0.5F + (Program.RNG.NextSingle() * 10 - 5);
+        var h = (h1 + h2) * 0.5F + (RandomUtils.RNG.NextSingle() * 10 - 5);
         h = (h % 360 + 360) % 360;
 
-        var s = (s1 + s2) * 0.5F + (Program.RNG.NextSingle() * 0.2F - 0.1F);
+        var s = (s1 + s2) * 0.5F + (RandomUtils.RNG.NextSingle() * 0.2F - 0.1F);
         s = Math.Clamp(s, 0.75F, 1F);
 
-        var l = (l1 + l2) * 0.5F + (Program.RNG.NextSingle() * 0.2F - 0.1F);
+        var l = (l1 + l2) * 0.5F + (RandomUtils.RNG.NextSingle() * 0.2F - 0.1F);
         l = Math.Clamp(l, 0.35F, 0.65F);
 
         return ColorUtils.ColorFromHsla(h, s, l, 1F);
@@ -188,10 +189,10 @@ public class Animal : Entity
 
         var position = (Position + animal.Position) / 2;
         var foodType = FoodTypeExtensions.GetRandomForOffspring(this, animal);
-        var size = (Size + animal.Size) / 2 + Program.RNG.NextSingle() * 4 - 2;
+        var size = (Size + animal.Size) / 2 + RandomUtils.RNG.NextSingle() * 4 - 2;
         if (foodType == FoodType.CARNIVORE && (FoodType != FoodType.CARNIVORE || animal.FoodType != FoodType.CARNIVORE))
         {
-            size += Program.RNG.NextSingle() * 2;
+            size += RandomUtils.RNG.NextSingle() * 2;
         }
 
         var color = GetOffspringColor(animal);
@@ -268,5 +269,5 @@ public class Animal : Entity
                                                  (FoodType == FoodType.OMNIVORE &&
                                                   animal.FoodType == FoodType.HERBIVORE));
     
-    public override IEntityDto ToDTO() => new AnimalDto("animal", Id.ToString(), Position.X, Position.Y, Color.ToHex(), Size, FoodType.ToString());
+    public override IEntityDto ToDTO() => new AnimalDto("Animal", Id.ToString(), Position.X, Position.Y, Color.ToHex(), Size, FoodType.ToString());
 }

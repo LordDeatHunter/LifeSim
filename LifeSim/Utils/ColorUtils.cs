@@ -1,6 +1,6 @@
 ﻿using System.Drawing;
 
-namespace LifeSim;
+namespace LifeSim.Utils;
 
 public static class ColorUtils
 {

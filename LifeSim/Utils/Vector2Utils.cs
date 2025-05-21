@@ -1,7 +1,7 @@
 ﻿using System.Numerics;
 using LifeSim.World;
 
-namespace LifeSim;
+namespace LifeSim.Utils;
 
 public static class Vector2Utils
 {

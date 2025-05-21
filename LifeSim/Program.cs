@@ -4,13 +4,13 @@ using System.Numerics;
 using System.Text.Json;
 using LifeSim.Entities;
 using LifeSim.Network;
+using LifeSim.Utils;
 using LifeSim.World;
 
 namespace LifeSim;
 
 public static class Program
 {
-    public static Random RNG = new();
     public static Dictionary<Guid, Food> Foods = new();
     public static Dictionary<Guid, Animal> Animals = new();
     public static Dictionary<Vector2, Chunk> Chunks = new();
@@ -36,7 +36,7 @@ public static class Program
 
         for (var i = 0; i < 400; i++)
         {
-            var food = new Food(new Vector2(RNG.Next(0, 1024), RNG.Next(0, 1024)));
+            var food = new Food(new Vector2(RandomUtils.RNG.Next(0, 1024), RandomUtils.RNG.Next(0, 1024)));
             Foods[food.Id] = food;
         }
 
@@ -46,11 +46,11 @@ public static class Program
         {
             if (Animals.Count > 0) return Task.CompletedTask;
 
-            var animalCount = RNG.Next(4, 16);
+            var animalCount = RandomUtils.RNG.Next(4, 16);
 
             for (var i = 0; i < animalCount; i++)
             {
-                var animal = new Animal(new Vector2(RNG.Next(350, 650), RNG.Next(350, 650)));
+                var animal = new Animal(new Vector2(RandomUtils.RNG.Next(350, 650), RandomUtils.RNG.Next(350, 650)));
                 Animals[animal.Id] = animal;
             }
 
@@ -103,10 +103,10 @@ public static class Program
 
                 if (Foods.Count < 1000)
                 {
-                    var foodAmount = RNG.Next(0, 10);
+                    var foodAmount = RandomUtils.RNG.Next(0, 10);
                     for (var i = 0; i < foodAmount; i++)
                     {
-                        var food = new Food(new Vector2(RNG.Next(0, 1024), RNG.Next(0, 1024)));
+                        var food = new Food(new Vector2(RandomUtils.RNG.Next(0, 1024), RandomUtils.RNG.Next(0, 1024)));
                         Foods[food.Id] = food;
                     }
                 }

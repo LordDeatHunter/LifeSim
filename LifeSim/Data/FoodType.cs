@@ -1,4 +1,5 @@
 ﻿using LifeSim.Entities;
+using LifeSim.Utils;
 
 namespace LifeSim.Data;
 
@@ -14,22 +15,22 @@ public static class FoodTypeExtensions
     public static FoodType GetRandomForOffspring(Animal parent1, Animal parent2)
     {
         var parentFoodType = GetRandomFromParents(parent1, parent2);
-        var mutationChance = (parent1.FoodType == parent2.FoodType ? 0.025F : 0.1F) * (Program.RNG.NextSingle() * 2F - 1F);
+        var mutationChance = (parent1.FoodType == parent2.FoodType ? 0.025F : 0.1F) * (RandomUtils.RNG.NextSingle() * 2F - 1F);
 
-        if (Program.RNG.NextSingle() > mutationChance) return parentFoodType;
+        if (RandomUtils.RNG.NextSingle() > mutationChance) return parentFoodType;
 
         return parentFoodType switch
         {
-            FoodType.OMNIVORE => Program.RNG.NextSingle() < 0.5F ? FoodType.HERBIVORE : FoodType.CARNIVORE,
-            FoodType.HERBIVORE => Program.RNG.NextSingle() < 0.5F ? FoodType.OMNIVORE : FoodType.CARNIVORE,
-            FoodType.CARNIVORE => Program.RNG.NextSingle() < 0.5F ? FoodType.OMNIVORE : FoodType.HERBIVORE,
+            FoodType.OMNIVORE => RandomUtils.RNG.NextSingle() < 0.5F ? FoodType.HERBIVORE : FoodType.CARNIVORE,
+            FoodType.HERBIVORE => RandomUtils.RNG.NextSingle() < 0.5F ? FoodType.OMNIVORE : FoodType.CARNIVORE,
+            FoodType.CARNIVORE => RandomUtils.RNG.NextSingle() < 0.5F ? FoodType.OMNIVORE : FoodType.HERBIVORE,
             _ => parentFoodType
         };
     }
 
     public static FoodType GetRandomFromParents(Animal parent1, Animal parent2)
     {
-        var rng = Program.RNG.NextSingle();
+        var rng = RandomUtils.RNG.NextSingle();
 
         return rng switch
         {

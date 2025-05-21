@@ -2,6 +2,7 @@ using System.Drawing;
 using System.Numerics;
 using LifeSim.Components;
 using LifeSim.Data;
+using LifeSim.Utils;
 
 namespace LifeSim.Entities;
 
