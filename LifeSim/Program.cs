@@ -1,8 +1,8 @@
 using System.Diagnostics;
 using System.Net.WebSockets;
 using System.Numerics;
+using System.Text;
 using System.Text.Json;
-using LifeSim.Entities;
 using LifeSim.Network;
 using LifeSim.Utils;
 using LifeSim.World;
@@ -11,19 +11,12 @@ namespace LifeSim;
 
 public static class Program
 {
-    public static Dictionary<Guid, Food> Foods = new();
-    public static Dictionary<Guid, Animal> Animals = new();
-    public static Dictionary<Vector2, Chunk> Chunks = new();
-    // helper for merging foods and animals
-    public static Dictionary<Guid, Entity> AllEntities =>
-        Animals.Values.ToDictionary(a => a.Id, Entity (a) => a)
-        .Concat(Foods.Values.ToDictionary(f => f.Id, Entity (f) => f))
-        .ToDictionary(e => e.Key, e => e.Value);
-
+    public static WorldStorage World { get; } = new();
     public static void Main(string[] args)
     {
         SocketLogic socketLogic = new();
-        
+        LifeSimApi api = new();
+
         var builder = WebApplication.CreateBuilder(args);
         var app = builder.Build();
 
@@ -31,32 +24,14 @@ public static class Program
         for (var j = 0; j <= 32; j++)
         {
             var chunkPos = new Vector2(i, j);
-            Chunks[chunkPos] = new Chunk(chunkPos);
+            World.Chunks[chunkPos] = new Chunk(chunkPos);
         }
 
-        for (var i = 0; i < 400; i++)
-        {
-            var food = new Food(new Vector2(RandomUtils.RNG.Next(0, 1024), RandomUtils.RNG.Next(0, 1024)));
-            Foods[food.Id] = food;
-        }
+        World.SpawnFood(400, 0, 1024);
 
         app.UseWebSockets();
 
-        app.Map("/api/reignite_life", _ =>
-        {
-            if (Animals.Count > 0) return Task.CompletedTask;
-
-            var animalCount = RandomUtils.RNG.Next(4, 16);
-
-            for (var i = 0; i < animalCount; i++)
-            {
-                var animal = new Animal(new Vector2(RandomUtils.RNG.Next(350, 650), RandomUtils.RNG.Next(350, 650)));
-                Animals[animal.Id] = animal;
-            }
-
-            return Task.CompletedTask;
-        });
-
+        app.Map("/api/reignite_life", api.ReigniteLifeHandler);
         app.Map("/ws", socketLogic.HandleWebSocket);
 
         _ = Task.Run(async () =>
@@ -72,27 +47,24 @@ public static class Program
                 var delta = (currentTicks - lastTicks) / tickFrequency;
                 lastTicks = currentTicks;
 
-                foreach (var entity in AllEntities.Values)
+                foreach (var entity in World.AllEntities.Values)
                 {
                     entity.Update(delta);
                 }
-
-                var foodDTOs = Foods.Values.Select(f => f.ToDTO());
-                var animalDTOs = Animals.Values.Select(a => a.ToDTO());
 
                 var timeFromStart = stopwatch.Elapsed.TotalMilliseconds;
                 var activeClients = socketLogic.Clients.Keys.Where(c => c.State == WebSocketState.Open).ToList();
 
                 var payload = new
                 {
-                    animals = animalDTOs,
-                    foods = foodDTOs,
+                    animals = World.GetAnimalDtos(),
+                    foods = World.GetFoodDtos(),
                     timeFromStart,
                     activeClients = activeClients.Count
                 };
 
                 var json = JsonSerializer.Serialize(payload);
-                var buffer = System.Text.Encoding.UTF8.GetBytes(json);
+                var buffer = Encoding.UTF8.GetBytes(json);
                 var segment = new ArraySegment<byte>(buffer);
 
                 foreach (var client in activeClients)
@@ -101,14 +73,10 @@ public static class Program
                     catch { /* dead client */ }
                 }
 
-                if (Foods.Count < 1000)
+                if (World.Foods.Count < 1000)
                 {
                     var foodAmount = RandomUtils.RNG.Next(0, 10);
-                    for (var i = 0; i < foodAmount; i++)
-                    {
-                        var food = new Food(new Vector2(RandomUtils.RNG.Next(0, 1024), RandomUtils.RNG.Next(0, 1024)));
-                        Foods[food.Id] = food;
-                    }
+                    World.SpawnFood(foodAmount, 0, 1024);
                 }
 
                 await Task.Delay(100);

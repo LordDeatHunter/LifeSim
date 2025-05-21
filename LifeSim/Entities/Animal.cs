@@ -45,7 +45,7 @@ public class Animal : Entity
 
     private Animal(Vector2 position, float size, Color color) : base(position, color, size)
     {
-        Program.Chunks[position.ToChunkPosition()].Animals.Add(this);
+        Program.World.Chunks[position.ToChunkPosition()].Animals.Add(this);
 
         var lifespan = 24F + RandomUtils.RNG.NextSingle() * 16F + Size / 4F;
         Components.Add(new LifespanComponent(lifespan));
@@ -102,8 +102,8 @@ public class Animal : Entity
         var newChunkPosition = Position.ToChunkPosition();
 
         if (prevChunkPosition == newChunkPosition) return;
-        Program.Chunks[prevChunkPosition].Animals.Remove(this);
-        Program.Chunks[newChunkPosition].Animals.Add(this);
+        Program.World.Chunks[prevChunkPosition].Animals.Remove(this);
+        Program.World.Chunks[newChunkPosition].Animals.Add(this);
     }
 
     private Color GetOffspringColor(Animal other)
@@ -139,15 +139,15 @@ public class Animal : Entity
         };
     }
 
-    private Food? FindNearestPlant() => Program.Foods.Values.Where(f => !f.MarkedForDeletion)
+    private Food? FindNearestPlant() => Program.World.Foods.Values.Where(f => !f.MarkedForDeletion)
         .OrderBy(f => Vector2.Distance(Position, f.Position)).FirstOrDefault();
 
-    private Animal? FindNearestMate() => Program.Animals.Values
+    private Animal? FindNearestMate() => Program.World.Animals.Values
         .Where(CanMate)
         .OrderBy(a => Vector2.Distance(Position, a.Position))
         .FirstOrDefault();
 
-    private Animal? FindNearestPrey() => Program.Animals.Values
+    private Animal? FindNearestPrey() => Program.World.Animals.Values
         .Where(CanEatAnimal)
         .OrderBy(a => Vector2.Distance(Position, a.Position))
         .FirstOrDefault();
@@ -169,8 +169,8 @@ public class Animal : Entity
     public override void MarkForDeletion()
     {
         base.MarkForDeletion();
-        Program.Chunks[Position.ToChunkPosition()].Animals.Remove(this);
-        Program.Animals.Remove(Id);
+        Program.World.Chunks[Position.ToChunkPosition()].Animals.Remove(this);
+        Program.World.Animals.Remove(Id);
     }
 
     private bool IsColliding(Entity other) => Vector2.Distance(Position, other.Position) < (Size + other.Size) / 2;
@@ -202,7 +202,7 @@ public class Animal : Entity
             FoodType = foodType,
         };
 
-        Program.Animals[newAnimal.Id] = newAnimal;
+        Program.World.Animals[newAnimal.Id] = newAnimal;
         if (animal._target == this) animal._target = null;
         _target = null;
     }
@@ -223,7 +223,7 @@ public class Animal : Entity
         for (var j = -1; j <= 1; j++)
         {
             var newChunkPos = new Vector2(chunkPosition.X + i, chunkPosition.Y + j);
-            if (!Program.Chunks.TryGetValue(newChunkPos, out var chunk)) continue;
+            if (!Program.World.Chunks.TryGetValue(newChunkPos, out var chunk)) continue;
             foreach (var animal in chunk.Animals.Where(animal => animal != this).Where(IsColliding))
             {
                 if (CanEatAnimal(animal))
@@ -268,6 +268,7 @@ public class Animal : Entity
                                                   animal.FoodType != FoodType.CARNIVORE) ||
                                                  (FoodType == FoodType.OMNIVORE &&
                                                   animal.FoodType == FoodType.HERBIVORE));
-    
-    public override IEntityDto ToDTO() => new AnimalDto(Id.ToString(), Position.X, Position.Y, Color.ToHex(), Size, FoodType.ToString());
+
+    public override IEntityDto ToDTO() =>
+        new AnimalDto(Id.ToString(), Position.X, Position.Y, Color.ToHex(), Size, FoodType.ToString());
 }
