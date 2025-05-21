@@ -36,6 +36,11 @@ body {
   /* font-size: 24px; */
 }
 
+.animal-type-display {
+  padding-left:8px;
+  margin:5px 0;
+}
+
 #view {
   border: 1px solid;
 }
