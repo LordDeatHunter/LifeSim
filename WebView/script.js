@@ -36,17 +36,17 @@ const getOutlineColor = (entity) => {
   if (entity.type !== "Animal") return undefined;
   switch (entity.foodType) {
     case "HERBIVORE":
-      return "#00FF00";
+      return "#309898";
     case "CARNIVORE":
-      return "#FF0000";
+      return "#cb0404";
     default:
-      return "#FFFFFF";
+      return "#ffaf2e";
   }
 };
 
 socket.onmessage = (event) => {
   const { animals, foods, activeClients, timeFromStart } = JSON.parse(
-    event.data
+    event.data,
   );
   lastUpdate = performance.now();
 
@@ -86,14 +86,12 @@ socket.onmessage = (event) => {
   const total = animalCount + foodCount;
   const animalPercent = ((animalCount / total) * 100).toFixed();
   const foodPercent = ((foodCount / total) * 100).toFixed();
-  document.querySelector(
-    "h2:nth-of-type(1)"
-  ).innerText = `Animals: ${animalCount}\n${animalPercent}% `;
-  document.querySelector(
-    "h2:nth-of-type(2)"
-  ).innerText = `Food: ${foodCount}\n${foodPercent}%`;
+  document.querySelector("h2:nth-of-type(1)").innerText =
+    `Animals: ${animalCount}\n${animalPercent}% `;
+  document.querySelector("h2:nth-of-type(2)").innerText =
+    `Food: ${foodCount}\n${foodPercent}%`;
   const animalFoodTypeElements = document.querySelectorAll(
-    ".animal-type-display"
+    ".animal-type-display",
   );
 
   let animalCountsPercentage = {};
@@ -114,7 +112,7 @@ socket.onmessage = (event) => {
   animalFoodTypeElements[2].innerText = `Omnivores: ${animalCounts["OMNIVORE"]} \n ${animalCountsPercentage["OMNIVORE"]}%`;
 
   document.querySelector("h1").innerText = `Elapsed time: ${getTimeString(
-    timeFromStart
+    timeFromStart,
   )}`;
 
   reigniteLifeButton.disabled = animalCount > 0;
@@ -163,7 +161,7 @@ const render = () => {
 
     let outline = getOutlineColor(curr);
 
-    renderEntity({ x, y }, size, color, outline);
+    renderEntity({ x, y }, size, outline ?? color, outline);
   }
 
   for (const id in recentlyDespawned) {
@@ -187,7 +185,7 @@ const render = () => {
       outline = getOutlineColor(entity);
       outline += alpha;
     }
-    renderEntity({ x, y }, size, color, outline);
+    renderEntity({ x, y }, size, outline ?? color, outline);
   }
 
   requestAnimationFrame(render);

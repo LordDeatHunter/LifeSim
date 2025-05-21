@@ -29,7 +29,7 @@ body {
 }
 
 .viewer-count {
-  display:flex;
+  display: flex;
   gap: 15px;
   align-items: center;
   justify-content: center;
@@ -37,8 +37,20 @@ body {
 }
 
 .animal-type-display {
-  padding-left:8px;
-  margin:5px 0;
+  padding-left: 8px;
+  margin: 5px 0;
+}
+
+#herbivore-display {
+  color: #b3ffff;
+}
+
+#carnivore-display {
+  color: #ffb3b3;
+}
+
+#omnivore-display {
+  color: #ffffb3;
 }
 
 #view {

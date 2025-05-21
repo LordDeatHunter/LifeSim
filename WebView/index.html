@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <title>Life Viewer</title>
@@ -28,9 +28,15 @@
         <canvas id="view" width="1000" height="1000"></canvas>
         <div id="info">
           <h2>Animals: 0</h2>
-          <h3 class="animal-type-display">Herbivores: 0</h3>
-          <h3 class="animal-type-display">Carnivores: 0</h3>
-          <h3 class="animal-type-display">Omnivores: 0</h3>
+          <h3 id="herbivore-display" class="animal-type-display">
+            Herbivores: 0
+          </h3>
+          <h3 id="carnivore-display" class="animal-type-display">
+            Carnivores: 0
+          </h3>
+          <h3 id="omnivore-display" class="animal-type-display">
+            Omnivores: 0
+          </h3>
           <h2>Food: 0</h2>
           <button id="reignite-life-button">Reignite Life</button>
         </div>
