@@ -54,7 +54,7 @@ public class Animal : Entity
         HungerRate *= 1 / MathF.Sqrt(Size);
         _maxSaturation += Program.RNG.NextSingle() * 10F;
 
-        Speed *= 1F / MathF.Pow(2F, 0.4F) * 2F;
+        Speed *= 1F / MathF.Pow(Size, 0.4F) * 2.5F;
     }
 
     public Animal(Vector2 position) : this(position, 8F, Color.CornflowerBlue)
