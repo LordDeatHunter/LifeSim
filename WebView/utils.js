@@ -34,3 +34,6 @@ const valueToHexSegment = (color) =>
     .padStart(2, "0");
 
 const appendAlpha = (color, alpha) => color + valueToHexSegment(alpha);
+
+const fractionToPercentage = (fraction, decimals = 0) =>
+  (fraction * 100).toFixed(decimals);

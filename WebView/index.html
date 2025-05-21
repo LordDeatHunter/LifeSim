@@ -4,12 +4,13 @@
     <title>Life Viewer</title>
     <script src="script.js"></script>
     <script src="utils.js"></script>
+    <script src="elements.js"></script>
     <link rel="stylesheet" href="style.css" />
     <link rel="icon" href="lifesim.png" type="image/x-icon" />
   </head>
   <body>
     <div class="main-container">
-      <h1>Elapsed time: 0s</h1>
+      <h1 id="elapsed-time-display">Elapsed time: 0s</h1>
       <div class="viewer-count">
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -28,7 +29,7 @@
       <div class="canvas-container">
         <canvas id="view" width="1000" height="1000"></canvas>
         <div id="info">
-          <h2>Animals: 0</h2>
+          <h2 class="entity-category-display">Animals: 0</h2>
           <h3 id="herbivore-display" class="animal-type-display">
             Herbivores: 0
           </h3>
@@ -38,7 +39,7 @@
           <h3 id="omnivore-display" class="animal-type-display">
             Omnivores: 0
           </h3>
-          <h2>Food: 0</h2>
+          <h2 class="entity-category-display">Food: 0</h2>
           <button id="reignite-life-button">Reignite Life</button>
         </div>
       </div>
