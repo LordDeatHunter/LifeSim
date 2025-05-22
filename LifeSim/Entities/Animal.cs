@@ -16,7 +16,7 @@ public class Animal : Entity
     private float MaxReproductionCooldown =>
         FoodType switch
         {
-            FoodType.HERBIVORE => 4F,
+            FoodType.HERBIVORE => 3F,
             FoodType.CARNIVORE => 6F,
             FoodType.OMNIVORE => 8F,
             _ => 5F
@@ -76,7 +76,9 @@ public class Animal : Entity
 
         if (_target == null || _target.MarkedForDeletion || (_target is Animal && needFood))
         {
-            _target = CanReproduce(14) && !needFood
+            var requiredSaturation = FoodType == FoodType.HERBIVORE ? 8F : 13F;
+
+            _target = CanReproduce(requiredSaturation) && !needFood
                 ? FindNearestMate()
                 : FindNearestFood();
 
@@ -173,7 +175,7 @@ public class Animal : Entity
         Program.World.Animals.Remove(Id);
     }
 
-    private bool IsColliding(Entity other) => Vector2.Distance(Position, other.Position) < (Size + other.Size) / 2;
+    private bool IsColliding(Entity other) => Vector2.Distance(Position, other.Position) <= (Size + other.Size) / 2;
 
     private void HandleReproductionTarget()
     {
@@ -263,7 +265,7 @@ public class Animal : Entity
         }
     }
 
-    private bool CanEatAnimal(Animal animal) => animal != this && !animal.MarkedForDeletion && Size > animal.Size &&
+    private bool CanEatAnimal(Animal animal) => animal != this && !animal.MarkedForDeletion && Size >= animal.Size &&
                                                 ((FoodType == FoodType.CARNIVORE &&
                                                   animal.FoodType != FoodType.CARNIVORE) ||
                                                  (FoodType == FoodType.OMNIVORE &&
