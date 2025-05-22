@@ -11,9 +11,8 @@ let recentlySpawned = {};
 let recentlyDespawned = {};
 
 socket.onmessage = (event) => {
-  const { animals, foods, activeClients, timeFromStart } = JSON.parse(
-    event.data,
-  );
+  const { animals, foods, activeClients, timeFromStart, reignitions } =
+    JSON.parse(event.data);
   lastUpdate = performance.now();
 
   const animalCount = animals.length;
@@ -74,6 +73,7 @@ socket.onmessage = (event) => {
   animalFoodTypeDisplays[2].innerText = `Omnivores: ${animalCounts["OMNIVORE"]}\n${animalCountsPercentage["OMNIVORE"]}%`;
 
   elapsedTimeHeader.innerText = `Elapsed time: ${getTimeString(timeFromStart)}`;
+  reignitionCounter.innerText = `Reignition count: ${reignitions}`;
 
   reigniteLifeButton.disabled = animalCount > 0;
 };

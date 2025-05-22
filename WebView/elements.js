@@ -9,6 +9,7 @@ let viewerCountHeader;
 let elapsedTimeHeader;
 let animalFoodTypeDisplays;
 let entityCategoryDisplays;
+let reignitionCounter;
 
 document.addEventListener("DOMContentLoaded", () => {
   canvas = document.getElementById("view");
@@ -19,6 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
   entityCategoryDisplays = document.querySelectorAll(
     ".entity-category-display",
   );
+  reignitionCounter = document.getElementById("reignition-counter");
 
   reigniteLifeButton = document.getElementById("reignite-life-button");
   reigniteLifeButton.addEventListener("click", reigniteLife);

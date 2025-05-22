@@ -12,6 +12,8 @@ namespace LifeSim;
 public static class Program
 {
     public static WorldStorage World { get; } = new();
+    public static int ReignitionCount { get; set; }
+    
     public static void Main(string[] args)
     {
         SocketLogic socketLogic = new();
@@ -60,7 +62,8 @@ public static class Program
                     animals = World.GetAnimalDtos(),
                     foods = World.GetFoodDtos(),
                     timeFromStart,
-                    activeClients = activeClients.Count
+                    activeClients = activeClients.Count,
+                    reignitions = ReignitionCount
                 };
 
                 var json = JsonSerializer.Serialize(payload);
