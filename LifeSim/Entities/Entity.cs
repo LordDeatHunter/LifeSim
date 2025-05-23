@@ -8,7 +8,7 @@ namespace LifeSim.Entities;
 
 public abstract class Entity(Vector2 position, Color color, float size = 8F)
 {
-    public Guid Id { get; } = Guid.NewGuid();
+    public UInt16 Id { get; } = IdUtils.GenerateId();
     private Vector2 _position = position;
 
     public Vector2 Position
@@ -27,6 +27,7 @@ public abstract class Entity(Vector2 position, Color color, float size = 8F)
     public virtual void MarkForDeletion()
     {
         MarkedForDeletion = true;
+        IdUtils.FreeId(Id);
     }
 
     public abstract IEntityDto ToDTO();

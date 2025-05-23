@@ -7,13 +7,13 @@ namespace LifeSim.World;
 
 public class WorldStorage
 {
-    public Dictionary<Guid, Food> Foods { get; } = new();
-    public Dictionary<Guid, Animal> Animals { get; } = new();
+    public Dictionary<UInt16, Food> Foods { get; } = new();
+    public Dictionary<UInt16, Animal> Animals { get; } = new();
 
     public Dictionary<Vector2, Chunk> Chunks { get; } = new();
 
     // helper for merging foods and animals
-    public Dictionary<Guid, Entity> AllEntities =>
+    public Dictionary<UInt16, Entity> AllEntities =>
         Animals.Values.ToDictionary(a => a.Id, Entity (a) => a)
             .Concat(Foods.Values.ToDictionary(f => f.Id, Entity (f) => f))
             .ToDictionary(e => e.Key, e => e.Value);

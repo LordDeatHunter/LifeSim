@@ -146,7 +146,7 @@ public static class Program
                     World.SpawnFood(foodAmount, 0, 1024);
                 }
 
-                await Task.Delay(100);
+                await Task.Delay(300);
             }
         });
 
