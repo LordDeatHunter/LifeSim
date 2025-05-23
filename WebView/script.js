@@ -1,6 +1,6 @@
 const socket = new WebSocket("ws://localhost:5000/ws");
 
-const lerpDuration = 100;
+const lerpDuration = 300;
 const lerp = (a, b, t) => a + (b - a) * t;
 
 let prevEntities = {};
