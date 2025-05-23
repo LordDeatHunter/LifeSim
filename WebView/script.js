@@ -140,11 +140,11 @@ const render = () => {
 
       let opacity = 1;
 
-      if (recentlySpawned[id] !== undefined) {
-        opacity = recentlySpawned[id];
-        recentlySpawned[id] += 0.03 * t;
-        if (recentlySpawned[id] > 1) {
-          delete recentlySpawned[id];
+      if (recentlySpawned[type][id] !== undefined) {
+        opacity = recentlySpawned[type][id];
+        recentlySpawned[type][id] += 0.03 * t;
+        if (recentlySpawned[type][id] > 1) {
+          delete recentlySpawned[type][id];
         }
       }
 
@@ -155,7 +155,7 @@ const render = () => {
 
       let outline;
       if (type === "animal") {
-        outline = getOutlineColor(curr, type);
+        outline = appendAlpha(getOutlineColor(curr, type), opacity);
       }
 
       renderEntity({ x, y }, size, outline ?? color, outline);
