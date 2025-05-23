@@ -42,15 +42,15 @@ body {
 }
 
 #herbivore-display {
-  color: #b3ffff;
+  color: #309898;
 }
 
 #carnivore-display {
-  color: #ffb3b3;
+  color: #cb0404;
 }
 
 #omnivore-display {
-  color: #ffffb3;
+  color: #ffaf2e;
 }
 
 #view {
@@ -145,4 +145,29 @@ a.logo {
 
 a.logo:hover {
   transform: scale(1.2);
+}
+
+@media (prefers-color-scheme: light) {
+  body {
+    background-color: #f0f0f0;
+    color: #161616;
+  }
+
+  button {
+    background-color: #f0f0f0;
+    color: #161616;
+    border: 1px solid #161616;
+  }
+
+  button:hover {
+    background-color: #f0f0f0;
+    color: #161616;
+  }
+
+  button:disabled {
+    background-color: #f0f0f0;
+    color: #a2a2a2;
+    border: 1px solid #a2a2a2;
+    cursor: not-allowed;
+  }
 }
