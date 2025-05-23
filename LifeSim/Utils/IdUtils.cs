@@ -1,37 +1,36 @@
-using System.Collections.Concurrent;
-
 namespace LifeSim.Utils;
 
 public static class IdUtils
 {
-    private static readonly int maxId = 65535;
-    public static readonly bool[] UsedIds = new bool[maxId];
-    public static UInt16 counter = 0;
-    public static Lock idsLock = new();
+    private const int MaxId = ushort.MaxValue + 1;
+    private static readonly bool[] UsedIds = new bool[MaxId];
+    private static readonly Lock IdsLock = new();
+    private static ushort _counter;
 
     static IdUtils()
     {
-        for (var i = 0; i < maxId; i++)
+        for (var i = 0; i < MaxId; i++)
         {
             UsedIds[i] = false;
         }
     }
 
-    public static UInt16 GenerateId()
+    public static ushort GenerateId()
     {
-        UInt16 id;
-        lock (idsLock)
+        ushort id;
+        lock (IdsLock)
         {
-            // If stuck in an infinite loop it's because all ids are used
-            // try bigger array (make maxId bigger) and refactor some logic because counter is unsigned
-            while (UsedIds[counter]) counter++;
-            id = counter;
-            UsedIds[counter] = true;
+            // If stuck in an infinite loop, it's because all ids are used.
+            // Try a bigger array (make maxId bigger) and refactor some logic because the counter is unsigned
+            while (UsedIds[_counter]) _counter++;
+            id = _counter;
+            UsedIds[_counter] = true;
         }
+
         return id;
     }
 
-    public static void FreeId(UInt16 id)
+    public static void FreeId(ushort id)
     {
         UsedIds[id] = false;
     }
