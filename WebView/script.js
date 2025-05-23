@@ -4,44 +4,64 @@ const lerpDuration = 100;
 const lerp = (a, b, t) => a + (b - a) * t;
 
 let prevEntities = {};
-let entities = {};
+let entities = {
+  animal: {},
+  food: {},
+};
 let lastUpdate = performance.now();
 
-let recentlySpawned = {};
-let recentlyDespawned = {};
+let recentlySpawned = {
+  animal: {},
+  food: {},
+};
+let recentlyDespawned = {
+  animal: {},
+  food: {},
+};
+
+const applyDiff = (cache, diffs, type) => {
+  const { added = {}, updated = {}, removed = [] } = diffs;
+
+  Object.entries(added).forEach(([id, dto]) => {
+    cache[type][id] = dto;
+    recentlySpawned[type][id] = 0;
+  });
+
+  Object.entries(updated)
+    .filter(([id]) => cache[type][id])
+    .forEach(([id, changes]) => Object.assign(cache[type][id], changes));
+
+  removed.forEach((id) => {
+    if (cache[type][id]) {
+      recentlyDespawned[type][id] = { entity: cache[type][id], opacity: 1 };
+      delete cache[type][id];
+      delete recentlySpawned[type][id];
+    }
+  });
+};
 
 socket.onmessage = (event) => {
   const { animals, foods, activeClients, timeFromStart, reignitions } =
     JSON.parse(event.data);
   lastUpdate = performance.now();
 
-  const animalCount = animals.length;
-  const foodCount = foods.length;
+  prevEntities = JSON.parse(JSON.stringify(entities));
+
+  applyDiff(entities, animals, "animal");
+  applyDiff(entities, foods, "food");
+
   let animalCounts = {
     HERBIVORE: 0,
     CARNIVORE: 0,
     OMNIVORE: 0,
   };
 
-  for (const animal of animals) {
+  for (const animal of Object.values(entities["animal"])) {
     animalCounts[animal.foodType] += 1;
   }
 
-  prevEntities = { ...entities };
-  entities = {};
-  for (const entity of [...animals, ...foods]) {
-    entities[entity.id] = entity;
-  }
-
-  for (const id in prevEntities) {
-    if (id in entities) continue;
-    recentlyDespawned[id] = { entity: prevEntities[id], opacity: 1 };
-  }
-
-  for (const id in entities) {
-    if (id in prevEntities) continue;
-    recentlySpawned[id] = 0;
-  }
+  const animalCount = Object.keys(entities["animal"]).length;
+  const foodCount = Object.keys(entities["food"]).length;
 
   const total = animalCount + foodCount;
   const animalPercent = fractionToPercentage(animalCount / total);
@@ -96,48 +116,55 @@ const render = () => {
 
   const t = Math.min((now - lastUpdate) / lerpDuration, 1);
 
-  for (const id in entities) {
-    const curr = entities[id];
-    const prev = id in prevEntities ? prevEntities[id] : curr;
+  for (const type of ["animal", "food"]) {
+    for (const id in entities[type]) {
+      const curr = entities[type][id];
+      const prev = id in prevEntities[type] ? prevEntities[type][id] : curr;
 
-    let opacity = 1;
+      let opacity = 1;
 
-    if (recentlySpawned[id] !== undefined) {
-      opacity = recentlySpawned[id];
-      recentlySpawned[id] += 0.03 * t;
-      if (recentlySpawned[id] > 1) {
-        delete recentlySpawned[id];
+      if (recentlySpawned[id] !== undefined) {
+        opacity = recentlySpawned[id];
+        recentlySpawned[id] += 0.03 * t;
+        if (recentlySpawned[id] > 1) {
+          delete recentlySpawned[id];
+        }
       }
+
+      const x = lerp(prev.x, curr.x, t);
+      const y = lerp(prev.y, curr.y, t);
+      const color = appendAlpha(curr.color, opacity);
+      const size = curr.size;
+
+      let outline;
+      if (type === "animal") {
+        outline = getOutlineColor(curr, type);
+      }
+
+      renderEntity({ x, y }, size, outline ?? color, outline);
     }
-
-    const x = lerp(prev.x, curr.x, t);
-    const y = lerp(prev.y, curr.y, t);
-    const color = appendAlpha(curr.color, opacity);
-    const size = curr.size;
-
-    let outline = getOutlineColor(curr);
-
-    renderEntity({ x, y }, size, outline ?? color, outline);
   }
 
-  for (const id in recentlyDespawned) {
-    const { entity, opacity } = recentlyDespawned[id];
+  for (const type of ["animal", "food"]) {
+    for (const id in recentlyDespawned[type]) {
+      const { entity, opacity } = recentlyDespawned[type][id];
 
-    if (opacity <= 0) {
-      delete recentlyDespawned[id];
-      continue;
+      if (opacity <= 0) {
+        delete recentlyDespawned[type][id];
+        continue;
+      }
+
+      const { x, y, size } = entity;
+      const color = appendAlpha(entity.color, opacity);
+
+      recentlyDespawned[type][id].opacity -= 0.03 * t;
+
+      let outline;
+      if (type === "animal") {
+        outline = appendAlpha(getOutlineColor(entity, type), opacity);
+      }
+      renderEntity({ x, y }, size, outline ?? color, outline);
     }
-
-    const { x, y, size } = entity;
-    const color = appendAlpha(entity.color, opacity);
-
-    recentlyDespawned[id].opacity -= 0.03 * t;
-
-    let outline;
-    if (entity.type === "animal") {
-      outline = appendAlpha(getOutlineColor(entity), opacity);
-    }
-    renderEntity({ x, y }, size, outline ?? color, outline);
   }
 
   requestAnimationFrame(render);

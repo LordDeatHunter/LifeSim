@@ -18,8 +18,8 @@ public class WorldStorage
             .Concat(Foods.Values.ToDictionary(f => f.Id, Entity (f) => f))
             .ToDictionary(e => e.Key, e => e.Value);
     
-    public IEnumerable<IEntityDto> GetAnimalDtos() => Animals.Values.Select(a => a.ToDTO());
-    public IEnumerable<IEntityDto> GetFoodDtos() => Foods.Values.Select(f => f.ToDTO());
+    public IEnumerable<AnimalDto> GetAnimalDtos() => Animals.Values.Select(a => (AnimalDto)a.ToDTO());
+    public IEnumerable<FoodDto> GetFoodDtos() => Foods.Values.Select(f => (FoodDto)f.ToDTO());
 
     public void SpawnFood(int amount, Vector2 startPosition, Vector2 endPosition)
     {

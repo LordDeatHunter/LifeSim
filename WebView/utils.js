@@ -16,8 +16,8 @@ const getTimeString = (milliseconds) => {
   return `${daysStr}d ${hoursStr}h ${minutesStr}m ${secondsStr}s ${remainingStr}ms`;
 };
 
-const getOutlineColor = (entity) => {
-  if (entity.type !== "animal") return undefined;
+const getOutlineColor = (entity, type) => {
+  if (type !== "animal") return undefined;
   switch (entity.foodType) {
     case "HERBIVORE":
       return "#309898";
