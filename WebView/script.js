@@ -89,7 +89,7 @@ let createConnection = () => {
       for (let type in animalCounts) {
         animalCountsPercentage[type] = fractionToPercentage(
           animalCounts[type] / animalCount,
-          1
+          1,
         );
       }
     }
@@ -107,7 +107,7 @@ let createConnection = () => {
     animalFoodTypeDisplays[2].innerText = `Omnivores: ${animalCounts["OMNIVORE"]}\n${animalCountsPercentage["OMNIVORE"]}%`;
 
     elapsedTimeHeader.innerText = `Elapsed time: ${getTimeString(
-      timeFromStart
+      timeFromStart,
     )}`;
     reignitionCounter.innerText = `Reignition count: ${reignitions}`;
 
@@ -203,8 +203,8 @@ document.addEventListener("DOMContentLoaded", () => {
         y: (e.clientY - top) / height - 0.5,
       };
       const rotation = {
-        x: normalizedMousePos.x * MAX_TILT_DEG * 2,
-        y: -normalizedMousePos.y * MAX_TILT_DEG * 2,
+        x: -normalizedMousePos.y * MAX_TILT_DEG * 2,
+        y: normalizedMousePos.x * MAX_TILT_DEG * 2,
       };
 
       el.style.transform = `
