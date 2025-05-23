@@ -4,35 +4,35 @@ namespace LifeSim.Utils;
 
 public static class IdUtils
 {
-    public static ConcurrentDictionary<UInt16, byte> FreeIds = new();
+    private static readonly int maxId = 65535;
+    public static readonly bool[] UsedIds = new bool[maxId];
+    public static UInt16 counter = 0;
+    public static Lock idsLock = new();
+
     static IdUtils()
     {
-        for (var i = 0; i < UInt16.MaxValue; i++)
+        for (var i = 0; i < maxId; i++)
         {
-            FreeIds[(UInt16)i] = 0;
+            UsedIds[i] = false;
         }
     }
-    public static ConcurrentDictionary<UInt16, byte> UsedIds = new();
 
     public static UInt16 GenerateId()
     {
-        if (!FreeIds.IsEmpty)
+        UInt16 id;
+        lock (idsLock)
         {
-            var id = FreeIds.Keys.First();
-            FreeIds.TryRemove(id, out _);
-            UsedIds[id] = 0;
-            return id;
+            // If stuck in an infinite loop it's because all ids are used
+            // try bigger array (make maxId bigger) and refactor some logic because counter is unsigned
+            while (UsedIds[counter]) counter++;
+            id = counter;
+            UsedIds[counter] = true;
         }
-
-        var idToUse = (UInt16)UsedIds.Count;
-        UsedIds[idToUse] = 0;
-        return idToUse;
+        return id;
     }
 
     public static void FreeId(UInt16 id)
     {
-        UsedIds.TryRemove(id, out _);
-        FreeIds[id] = 0;
+        UsedIds[id] = false;
     }
-
 }
