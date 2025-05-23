@@ -17,7 +17,7 @@ public class WorldStorage
         Animals.Values.ToDictionary(a => a.Id, Entity (a) => a)
             .Concat(Foods.Values.ToDictionary(f => f.Id, Entity (f) => f))
             .ToDictionary(e => e.Key, e => e.Value);
-    
+
     public IEnumerable<AnimalDto> GetAnimalDtos() => Animals.Values.Select(a => (AnimalDto)a.ToDTO());
     public IEnumerable<FoodDto> GetFoodDtos() => Foods.Values.Select(f => (FoodDto)f.ToDTO());
 
