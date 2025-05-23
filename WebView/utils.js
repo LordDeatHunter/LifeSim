@@ -10,8 +10,8 @@ const getTimeString = (milliseconds) => {
   const remainingStr = toPaddedNumber((milliseconds % 1000) / 100, 0, 3);
   const secondsStr = toPaddedNumber(seconds % 60);
   const minutesStr = toPaddedNumber(minutes % 60);
-  const hoursStr = toPaddedNumber(hours % 60);
-  const daysStr = toPaddedNumber(days % 24);
+  const hoursStr = toPaddedNumber(hours % 24);
+  const daysStr = toPaddedNumber(days);
 
   return `${daysStr}d ${hoursStr}h ${minutesStr}m ${secondsStr}s ${remainingStr}ms`;
 };
