@@ -144,4 +144,5 @@ a.logo {
 }
 
 a.logo:hover {
+  transform: scale(1.2);
 }
