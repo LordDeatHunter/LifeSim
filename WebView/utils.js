@@ -7,13 +7,13 @@ const getTimeString = (milliseconds) => {
   const hours = minutes / 60;
   const days = hours / 24;
 
-  const remainingStr = toPaddedNumber((milliseconds % 1000) / 100, 0, 3);
+  const remainingStr = toPaddedNumber((milliseconds % 1000) / 100, 0, 1);
   const secondsStr = toPaddedNumber(seconds % 60);
   const minutesStr = toPaddedNumber(minutes % 60);
   const hoursStr = toPaddedNumber(hours % 24);
   const daysStr = toPaddedNumber(days);
 
-  return `${daysStr}d ${hoursStr}h ${minutesStr}m ${secondsStr}s ${remainingStr}ms`;
+  return `${daysStr}d ${hoursStr}h ${minutesStr}m ${secondsStr}.${remainingStr}s`;
 };
 
 const getOutlineColor = (entity, type) => {
