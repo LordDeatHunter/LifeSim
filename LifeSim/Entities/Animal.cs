@@ -239,7 +239,9 @@ public class Animal : Entity
         AreCompatibleForMating(animal) &&
         AnimalIsInMatingRange(animal);
 
-    public bool CanReproduce() => ReproductionCooldown >= MaxReproductionCooldown;
+    public bool CanReproduce() => ReproductionCooldown >= MaxReproductionCooldown &&
+                                  Saturation >= HungerThreshold[FoodType] &&
+                                  Age >= _lifespan * 0.2F;
 
     public bool AnimalIsInMatingRange(Animal animal) => Vector2.Distance(Position, animal.Position) <= MatingRange;
 
