@@ -10,15 +10,15 @@ namespace LifeSim.Entities;
 public class Animal : Entity
 {
     private const float DefaultSpeed = 16F;
-    private const float DefaultHungerRate = 0.4F;
+    private const float DefaultHungerRate = 0.5F;
     private const float DefaultMaxSat = 20F;
     private const float SizeDifferenceThreshold = 5F;
     private const float MatePadding = 4F;
 
     public static readonly ImmutableDictionary<FoodType, float> BaseReproductionCooldown =
         ImmutableDictionary<FoodType, float>.Empty
-            .Add(FoodType.HERBIVORE, 5F)
-            .Add(FoodType.CARNIVORE, 8F)
+            .Add(FoodType.HERBIVORE, 4F)
+            .Add(FoodType.CARNIVORE, 5F)
             .Add(FoodType.OMNIVORE, 6F);
 
     public static readonly ImmutableDictionary<FoodType, float> HungerThreshold =
@@ -29,9 +29,9 @@ public class Animal : Entity
 
     public static readonly ImmutableDictionary<FoodType, float> ReproductionCost =
         ImmutableDictionary<FoodType, float>.Empty
-            .Add(FoodType.HERBIVORE, 2F)
-            .Add(FoodType.CARNIVORE, 5F)
-            .Add(FoodType.OMNIVORE, 3.5F);
+            .Add(FoodType.HERBIVORE, 3F)
+            .Add(FoodType.CARNIVORE, 4F)
+            .Add(FoodType.OMNIVORE, 3.6F);
 
     private float Speed { get; set; }
     private readonly float _maxSaturation = DefaultMaxSat;
