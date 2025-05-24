@@ -151,10 +151,12 @@ public class Animal : Entity
         FoodType.OMNIVORE => FindNearestFoodEntity(),
         _ => null
     };
+    
+    public float FoodValue(Entity food) => Vector2.Distance(food.Position, Position) / Speed + food.Size / 2F / Saturation;
 
     public Food? FindNearestPlant() => Program.World.Foods.Values
         .Where(f => !f.MarkedForDeletion)
-        .OrderBy(f => Vector2.Distance(Position, f.Position))
+        .OrderBy(FoodValue)
         .FirstOrDefault();
 
     public Animal? FindNearestMate() => Program.World.Animals.Values
@@ -164,7 +166,7 @@ public class Animal : Entity
 
     public Animal? FindNearestPrey() => Program.World.Animals.Values
         .Where(CanEatAnimal)
-        .OrderBy(a => Vector2.Distance(Position, a.Position))
+        .OrderBy(FoodValue)
         .FirstOrDefault();
 
     public Entity? FindNearestFoodEntity()
@@ -176,9 +178,7 @@ public class Animal : Entity
         if (nearestPlant == null) return nearestPrey;
         if (nearestPrey == null) return nearestPlant;
 
-        return Vector2.Distance(Position, nearestPlant.Position) < Vector2.Distance(Position, nearestPrey.Position)
-            ? nearestPlant
-            : nearestPrey;
+        return FoodValue(nearestPlant) < FoodValue(nearestPrey) ? nearestPlant : nearestPrey;
     }
 
     public override void MarkForDeletion()
