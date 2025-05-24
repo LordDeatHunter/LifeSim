@@ -199,15 +199,33 @@ public class Animal : Entity
         ReproductionCooldown = 0F;
         animal.ReproductionCooldown = 0F;
 
-        var position = (Position + animal.Position) / 2F;
-        var foodType = FoodTypeExtensions.GetRandomForOffspring(this, animal);
-        var size = (Size + animal.Size) / 2F + RandomUtils.RNG.NextSingle() * 4F - 2F;
-        if (foodType == FoodType.CARNIVORE && (FoodType != FoodType.CARNIVORE || animal.FoodType != FoodType.CARNIVORE))
+        var childCount = RandomUtils.RNG.NextSingle() switch
+        {
+            < 0.6F => 1,
+            < 0.9F => 2,
+            _ => 3
+        };
+
+        for (var i = 0; i < childCount; i++)
+        {
+            CreateOffspring(animal);
+        }
+
+        if (animal.Target == this) animal.Target = null;
+        Target = null;
+    }
+    
+    private void CreateOffspring(Animal other)
+    {
+        var position = (Position + other.Position) / 2F;
+        var foodType = FoodTypeExtensions.GetRandomForOffspring(this, other);
+        var size = (Size + other.Size) / 2F + RandomUtils.RNG.NextSingle() * 4F - 2F;
+        if (foodType == FoodType.CARNIVORE && (FoodType != FoodType.CARNIVORE || other.FoodType != FoodType.CARNIVORE))
         {
             size += RandomUtils.RNG.NextSingle() * 2F;
         }
 
-        var color = GetOffspringColor(animal);
+        var color = GetOffspringColor(other);
 
         var newAnimal = new Animal(position, size, color)
         {
@@ -215,8 +233,6 @@ public class Animal : Entity
         };
 
         Program.World.Animals[newAnimal.Id] = newAnimal;
-        if (animal.Target == this) animal.Target = null;
-        Target = null;
     }
 
     public bool CanMateWith(Animal animal) =>
