@@ -1,6 +1,8 @@
-﻿using System.Drawing;
+﻿using System.Collections.Immutable;
+using System.Drawing;
 using System.Numerics;
 using LifeSim.Data;
+using LifeSim.States;
 using LifeSim.Utils;
 
 namespace LifeSim.Entities;
@@ -13,39 +15,29 @@ public class Animal : Entity
     private const float SizeDifferenceThreshold = 5F;
     private const float MatePadding = 4F;
 
-    private static readonly Dictionary<FoodType, float> BaseReproductionCooldown = new()
-    {
-        { FoodType.HERBIVORE, 3F },
-        { FoodType.CARNIVORE, 6F },
-        { FoodType.OMNIVORE, 8F }
-    };
+    public static readonly ImmutableDictionary<FoodType, float> BaseReproductionCooldown =
+        ImmutableDictionary<FoodType, float>.Empty
+            .Add(FoodType.HERBIVORE, 5F)
+            .Add(FoodType.CARNIVORE, 8F)
+            .Add(FoodType.OMNIVORE, 6F);
 
-    private static readonly Dictionary<FoodType, float> HungerThreshold = new()
-    {
-        { FoodType.HERBIVORE, 5F },
-        { FoodType.CARNIVORE, 10F },
-        { FoodType.OMNIVORE, 7F }
-    };
+    public static readonly ImmutableDictionary<FoodType, float> HungerThreshold =
+        ImmutableDictionary<FoodType, float>.Empty
+            .Add(FoodType.HERBIVORE, 4F)
+            .Add(FoodType.CARNIVORE, 6F)
+            .Add(FoodType.OMNIVORE, 5F);
 
-    private static readonly Dictionary<FoodType, float> ReproductionCost = new()
-    {
-        { FoodType.HERBIVORE, 2F },
-        { FoodType.CARNIVORE, 5F },
-        { FoodType.OMNIVORE, 3.5F }
-    };
-
-    private static readonly Dictionary<FoodType, float> ReproduceThreshold = new()
-    {
-        { FoodType.HERBIVORE, 4F },
-        { FoodType.CARNIVORE, 6F },
-        { FoodType.OMNIVORE, 5F }
-    };
+    public static readonly ImmutableDictionary<FoodType, float> ReproductionCost =
+        ImmutableDictionary<FoodType, float>.Empty
+            .Add(FoodType.HERBIVORE, 2F)
+            .Add(FoodType.CARNIVORE, 5F)
+            .Add(FoodType.OMNIVORE, 3.5F);
 
     private float Speed { get; set; }
-    private Entity? _target;
     private readonly float _maxSaturation = DefaultMaxSat;
     private float _currentSaturation = DefaultMaxSat / 2;
-    private float _lifespan = 24F;
+    private readonly float _lifespan = 24F;
+    private float _age = 0F;
 
     private float MaxReproductionCooldown => BaseReproductionCooldown.GetValueOrDefault(FoodType, 5F);
     private float _reproductionCooldown;
@@ -66,24 +58,35 @@ public class Animal : Entity
         }
     }
 
+    public Entity? Target { get; set; }
+    public AnimalStateMachine StateMachine { get; }
+
+    public float EatRangeSquared =>
+        MathF.Pow((Size + (Target?.Size ?? 0F)) / 2F, 2F);
+
+    public float MatingRange => Target == null ? 0 : (Size + Target.Size + MatePadding) / 2F;
+
     public float HungerRate { get; }
     public FoodType FoodType { get; private init; } = FoodType.HERBIVORE;
 
-    public void SetLifespan(float value)
-    {
-        _lifespan = value;
-        if (_lifespan <= 0) MarkForDeletion();
+    public float Age {
+        get => _age;
+        set
+        {
+            _age = value;
+            if (_age >= _lifespan) MarkForDeletion();
+        }
     }
-
-    public float Age { get; set; }
 
     private Animal(Vector2 position, float size, Color color) : base(position, color, size)
     {
         Program.World.Chunks[position.ToChunkPosition()].Animals.Add(this);
-        SetLifespan(_lifespan + RandomUtils.RNG.NextSingle() * 16F + size / 4F);
+        _lifespan += RandomUtils.RNG.NextSingle() * 16F + size / 4F;
 
         HungerRate = DefaultHungerRate * MathF.Sqrt(size);
         Speed = DefaultSpeed * (2.5F / MathF.Pow(size, 0.4F));
+
+        StateMachine = new AnimalStateMachine(this);
     }
 
     public Animal(Vector2 position) : this(position, 8F, Color.CornflowerBlue)
@@ -101,30 +104,7 @@ public class Animal : Entity
         var prevPosition = Position;
         var prevChunkPosition = prevPosition.ToChunkPosition();
 
-        var needFood = Saturation < HungerThreshold[FoodType];
-
-        if (_target == null || _target.MarkedForDeletion || (_target is Animal && needFood))
-        {
-            _target = CanReproduce() && !needFood ? FindNearestMate() : FindNearestFood();
-
-            if (_target is Animal animal)
-            {
-                animal._target = this;
-            }
-        }
-
-        if (_target != null)
-        {
-            var toTarget = _target.Position - prevPosition;
-            var direction = toTarget.LengthSquared() > 0
-                ? Vector2.Normalize(toTarget)
-                : Vector2.Zero;
-
-            Position += direction * Speed * deltaTime;
-        }
-
-        HandleCollision();
-        HandleReproductionTarget();
+        StateMachine.Update(deltaTime);
 
         var newChunkPosition = Position.ToChunkPosition();
 
@@ -155,7 +135,16 @@ public class Animal : Entity
         return ColorUtils.ColorFromHsla(h, s, l, 1F);
     }
 
-    private Entity? FindNearestFood() => FoodType switch
+    public void MoveTowards(Vector2 destination, float deltaTime)
+    {
+        var direction = Vector2.Normalize(destination - Position);
+        if (!float.IsNaN(direction.X) && !float.IsNaN(direction.Y))
+            Position += direction * Speed * deltaTime;
+
+        HandleCollision();
+    }
+
+    public Entity? FindNearestFood() => FoodType switch
     {
         FoodType.HERBIVORE => FindNearestPlant(),
         FoodType.CARNIVORE => FindNearestPrey(),
@@ -163,22 +152,22 @@ public class Animal : Entity
         _ => null
     };
 
-    private Food? FindNearestPlant() => Program.World.Foods.Values
+    public Food? FindNearestPlant() => Program.World.Foods.Values
         .Where(f => !f.MarkedForDeletion)
         .OrderBy(f => Vector2.Distance(Position, f.Position))
         .FirstOrDefault();
 
-    private Animal? FindNearestMate() => Program.World.Animals.Values
-        .Where(CanMate)
+    public Animal? FindNearestMate() => Program.World.Animals.Values
+        .Where(AreCompatibleForMating)
         .OrderBy(a => Vector2.Distance(Position, a.Position))
         .FirstOrDefault();
 
-    private Animal? FindNearestPrey() => Program.World.Animals.Values
+    public Animal? FindNearestPrey() => Program.World.Animals.Values
         .Where(CanEatAnimal)
         .OrderBy(a => Vector2.Distance(Position, a.Position))
         .FirstOrDefault();
 
-    private Entity? FindNearestFoodEntity()
+    public Entity? FindNearestFoodEntity()
     {
         var nearestPlant = FindNearestPlant();
         var nearestPrey = FindNearestPrey();
@@ -199,14 +188,10 @@ public class Animal : Entity
         Program.World.Animals.Remove(Id);
     }
 
-    private bool IsColliding(Entity other) => Vector2.Distance(Position, other.Position) <= (Size + other.Size) / 2;
+    public bool IsColliding(Entity other) => Vector2.Distance(Position, other.Position) <= (Size + other.Size) / 2;
 
-    private void HandleReproductionTarget()
+    public void HandleReproductionTarget(Animal animal)
     {
-        if (_target is not Animal animal || animal == this) return;
-        if (!CanMate(animal)) return;
-        if (Vector2.Distance(Position, animal.Position) > (Size + animal.Size + MatePadding) / 2F) return;
-
         Saturation -= ReproductionCost[FoodType];
         animal.Saturation -= ReproductionCost[animal.FoodType];
 
@@ -225,8 +210,8 @@ public class Animal : Entity
             CreateOffspring(animal);
         }
 
-        if (animal._target == this) animal._target = null;
-        _target = null;
+        if (animal.Target == this) animal.Target = null;
+        Target = null;
     }
     
     private void CreateOffspring(Animal other)
@@ -249,17 +234,27 @@ public class Animal : Entity
         Program.World.Animals[newAnimal.Id] = newAnimal;
     }
 
-    public bool CanMate(Animal animal) => this != animal && CanReproduce() && animal.CanReproduce() &&
-                                          MathF.Abs(Size - animal.Size) < SizeDifferenceThreshold &&
-                                          AreCompatible(animal);
+    public bool CanMateWith(Animal animal) =>
+        AreCompatibleForMating(animal) &&
+        AnimalIsInMatingRange(animal);
 
-    public bool CanReproduce() => CanReproduce(ReproduceThreshold[FoodType]);
+    public bool CanReproduce() => ReproductionCooldown >= MaxReproductionCooldown &&
+                                  Saturation >= HungerThreshold[FoodType] &&
+                                  Age >= _lifespan * 0.2F;
 
-    public bool CanReproduce(float requiredSaturation) => !MarkedForDeletion && Saturation >= requiredSaturation &&
-                                                          ReproductionCooldown >= MaxReproductionCooldown;
+    public bool AnimalIsInMatingRange(Animal animal) => Vector2.Distance(Position, animal.Position) <= MatingRange;
 
-    public bool AreCompatible(Animal animal) => FoodType == animal.FoodType || FoodType == FoodType.OMNIVORE ||
-                                                animal.FoodType == FoodType.OMNIVORE;
+    public bool AreCompatibleForMating(Animal animal) =>
+        this != animal &&
+        CanReproduce() &&
+        animal.CanReproduce() &&
+        MathF.Abs(Size - animal.Size) <= SizeDifferenceThreshold &&
+        AreDietsCompatibleForMating(animal);
+
+    public bool AreDietsCompatibleForMating(Animal animal) =>
+        FoodType == animal.FoodType ||
+        FoodType == FoodType.OMNIVORE ||
+        animal.FoodType == FoodType.OMNIVORE;
 
     private void HandleCollision()
     {
@@ -297,14 +292,14 @@ public class Animal : Entity
         animal.Position -= direction * force;
     }
 
-    private void Consume(Entity entity)
+    public void Consume(Entity entity)
     {
         Saturation += entity.Size / 2F;
         entity.MarkForDeletion();
 
-        if (_target == entity)
+        if (Target == entity)
         {
-            _target = null;
+            Target = null;
         }
     }
 
