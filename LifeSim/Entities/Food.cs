@@ -18,7 +18,7 @@ public class Food : Entity
     {
         base.MarkForDeletion();
         Program.World.Chunks[Position.ToChunkPosition()].Food.Remove(this);
-        Program.World.Foods.Remove(Id);
+        Program.World.Foods.TryRemove(Id, out _);
     }
 
     public override IEntityDto ToDTO() => new FoodDto(Id.ToString(), Position.X, Position.Y, Color.ToHex(), Size);

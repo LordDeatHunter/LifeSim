@@ -16,12 +16,8 @@ public class SocketLogic
         using var ws = await context.WebSockets.AcceptWebSocketAsync();
         Clients.TryAdd(ws, 0);
 
-        var allAnimals = Program.World
-            .GetAnimalDtos()
-            .ToDictionary(a => a.id, a => a);
-        var allFoods = Program.World
-            .GetFoodDtos()
-            .ToDictionary(f => f.id, f => f);
+        var allAnimals = Program.World.GetAnimalDtos();
+        var allFoods = Program.World.GetFoodDtos();
 
         var initialPayload = new
         {

@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System.Collections.Concurrent;
+using System.Numerics;
 using LifeSim.Data;
 using LifeSim.Entities;
 using LifeSim.Utils;
@@ -7,19 +8,18 @@ namespace LifeSim.World;
 
 public class WorldStorage
 {
-    public Dictionary<ushort, Food> Foods { get; } = new();
-    public Dictionary<ushort, Animal> Animals { get; } = new();
+    public ConcurrentDictionary<ushort, Food> Foods { get; } = new();
+    public ConcurrentDictionary<ushort, Animal> Animals { get; } = new();
 
-    public Dictionary<Vector2, Chunk> Chunks { get; } = new();
+    public ConcurrentDictionary<Vector2, Chunk> Chunks { get; } = new();
 
     // helper for merging foods and animals
-    public Dictionary<ushort, Entity> AllEntities =>
-        Animals.Values.ToDictionary(a => a.Id, Entity (a) => a)
+    public ConcurrentDictionary<ushort, Entity> AllEntities => new(Animals.Values.ToDictionary(a => a.Id, Entity (a) => a)
             .Concat(Foods.Values.ToDictionary(f => f.Id, Entity (f) => f))
-            .ToDictionary(e => e.Key, e => e.Value);
+            .ToDictionary(e => e.Key, e => e.Value));
 
-    public IEnumerable<AnimalDto> GetAnimalDtos() => Animals.Values.Select(a => (AnimalDto)a.ToDTO());
-    public IEnumerable<FoodDto> GetFoodDtos() => Foods.Values.Select(f => (FoodDto)f.ToDTO());
+    public ConcurrentDictionary<string, AnimalDto> GetAnimalDtos() => new(Animals.Values.ToList().Select(a => (AnimalDto)a.ToDTO()).ToDictionary(a => a.id, a => a));
+    public ConcurrentDictionary<string, FoodDto> GetFoodDtos() => new(Foods.Values.ToList().Select(f => (FoodDto)f.ToDTO()).ToDictionary(f => f.id, f => f));
 
     public void SpawnFood(int amount, Vector2 startPosition, Vector2 endPosition)
     {

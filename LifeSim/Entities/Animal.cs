@@ -185,7 +185,7 @@ public class Animal : Entity
     {
         base.MarkForDeletion();
         Program.World.Chunks[Position.ToChunkPosition()].Animals.Remove(this);
-        Program.World.Animals.Remove(Id);
+        Program.World.Animals.TryRemove(Id, out _);
     }
 
     public bool IsColliding(Entity other) => Vector2.Distance(Position, other.Position) <= (Size + other.Size) / 2;
