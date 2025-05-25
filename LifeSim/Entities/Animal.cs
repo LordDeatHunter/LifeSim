@@ -139,7 +139,17 @@ public class Animal : Entity
     {
         var direction = Vector2.Normalize(destination - Position);
         if (!float.IsNaN(direction.X) && !float.IsNaN(direction.Y))
-            Position += direction * Speed * deltaTime;
+        {
+            var prevPosition = Position;
+            var finalDestination = Position + direction * Speed * deltaTime;
+            var stepSize = Size / 2F;
+            var steps = (int)Math.Ceiling(Speed * deltaTime / stepSize);
+            for (var i = 1; i <= steps; i++)
+            {
+                Position = Vector2.Lerp(prevPosition, finalDestination, (float)i / steps);
+                HandleCollision();
+            }
+        }
 
         HandleCollision();
     }
