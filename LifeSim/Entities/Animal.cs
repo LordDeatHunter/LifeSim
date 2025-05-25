@@ -81,10 +81,10 @@ public class Animal : Entity
     private Animal(Vector2 position, float size, Color color) : base(position, color, size)
     {
         Program.World.Chunks[position.ToChunkPosition()].Animals.Add(this);
-        _lifespan += RandomUtils.RNG.NextSingle() * 16F + size / 4F;
+        _lifespan += RandomUtils.RNG.NextSingle() * 16F + Size / 4F;
 
-        HungerRate = DefaultHungerRate * MathF.Sqrt(size);
-        Speed = DefaultSpeed * (2.5F / MathF.Pow(size, 0.4F));
+        HungerRate = DefaultHungerRate * MathF.Sqrt(Size);
+        Speed = DefaultSpeed * (2.5F / MathF.Pow(Size, 0.4F));
 
         StateMachine = new AnimalStateMachine(this);
     }
