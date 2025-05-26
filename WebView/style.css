@@ -207,31 +207,6 @@ a.logo:hover {
   transform: scale(1.2);
 }
 
-@media (prefers-color-scheme: light) {
-  body {
-    background-color: #f0f0f0;
-    color: #161616;
-  }
-
-  button {
-    background-color: #f0f0f0;
-    color: #161616;
-    border: 1px solid #161616;
-  }
-
-  button:hover {
-    background-color: #f0f0f0;
-    color: #161616;
-  }
-
-  button:disabled {
-    background-color: #f0f0f0;
-    color: #a2a2a2;
-    border: 1px solid #a2a2a2;
-    cursor: not-allowed;
-  }
-}
-
 .betting-box {
   background-color: #1e1e1e;
   border: 2px solid #cecece;
@@ -277,4 +252,41 @@ a.logo:hover {
   margin-top: 12px;
   font-style: italic;
   color: #7fd0ff;
+}
+
+@media (prefers-color-scheme: light) {
+  body {
+    background-color: #f0f0f0;
+    color: #161616;
+  }
+
+  button {
+    background-color: #f0f0f0;
+    color: #161616;
+    border: 1px solid #161616;
+  }
+
+  button:hover {
+    background-color: #f0f0f0;
+    color: #161616;
+  }
+
+  button:disabled {
+    background-color: #f0f0f0;
+    color: #a2a2a2;
+    border: 1px solid #a2a2a2;
+    cursor: not-allowed;
+  }
+
+  .betting-box {
+    background-color: #f0f0f0;
+    border: 2px solid #161616;
+    color: #161616;
+  }
+
+  .bet-controls input {
+    background-color: #f0f0f0;
+    color: #161616;
+    border: 1px solid #161616;
+  }
 }
