@@ -45,12 +45,12 @@ const placeBet = async (betType) => {
       betAmountElement.value = "";
 
       let time = 30;
-      setInterval(() => {
+      const interval = setInterval(() => {
         betMsg.textContent = `You bet ${amount} on ${betType}. Waiting ${--time}s...`;
         if (time < 0) {
           betMsg.remove();
           updateCurrencyDisplay();
-          clearInterval(this);
+          clearInterval(interval);
         }
       }, 1000);
     })
