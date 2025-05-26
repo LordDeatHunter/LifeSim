@@ -7,6 +7,7 @@ using LifeSim.Data;
 using LifeSim.Network;
 using LifeSim.Utils;
 using LifeSim.World;
+using Microsoft.AspNetCore.DataProtection;
 
 namespace LifeSim;
 
@@ -21,6 +22,16 @@ public static class Program
         LifeSimApi api = new();
 
         var builder = WebApplication.CreateBuilder(args);
+        builder.Services.AddDataProtection().SetApplicationName("LifeSim");
+
+        builder.Services.AddDistributedMemoryCache();
+        builder.Services.AddSession(options =>
+        {
+            options.Cookie.HttpOnly = true;
+            options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+            options.IdleTimeout = TimeSpan.FromDays(365);
+            options.Cookie.IsEssential = true;
+        });
         var app = builder.Build();
 
         var previousAnimals = new Dictionary<string, AnimalDto>();
@@ -46,9 +57,40 @@ public static class Program
             e.SetObserved();
         };
 
+        app.UseSession();
         app.UseWebSockets();
 
+        app.Use(async (context, next) =>
+        {
+            var protector = builder.Services
+                .BuildServiceProvider()
+                .GetRequiredService<IDataProtectionProvider>()
+                .CreateProtector("ClientId");
+
+            if (!context.Request.Cookies.ContainsKey("clientId"))
+            {
+                var rawId = Guid.NewGuid().ToString();
+                var protectedId = protector.Protect(rawId);
+                context.Response.Cookies.Append(
+                    "clientId",
+                    protectedId,
+                    new CookieOptions
+                    {
+                        HttpOnly = true,
+                        Secure = true,
+                        SameSite = SameSiteMode.Strict,
+                        Expires = DateTimeOffset.UtcNow.AddYears(1)
+                    }
+                );
+                context.Session.SetString("clientId", rawId);
+            }
+
+            await next();
+        });
+
         app.Map("/api/reignite_life", api.ReigniteLifeHandler);
+        app.Map("/api/currency", api.GetCurrency);
+        app.Map("/api/bet", api.Bet);
         app.Map("/ws", socketLogic.HandleWebSocket);
 
         var stopwatch = new Stopwatch();

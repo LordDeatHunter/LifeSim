@@ -2,9 +2,11 @@
 <html lang="en">
   <head>
     <title>Life Viewer</title>
+    <meta charset="UTF-8" />
     <script src="script.js"></script>
     <script src="utils.js"></script>
     <script src="elements.js"></script>
+    <script src="betting.js"></script>
     <link rel="stylesheet" href="style.css" />
     <link rel="icon" href="lifesim.png" type="image/x-icon" />
     <link
@@ -47,6 +49,26 @@
           <button id="reignite-life-button">Reignite Life</button>
           <h3 id="reignition-counter">Reignition count: 0</h3>
         </div>
+      </div>
+      <div id="betting-menu" class="betting-box">
+        <h2>📈 Will animal count increase or decrease in next 30s?</h2>
+        <div id="currency-display">
+          Your currency: <span id="currency-amount">0</span>
+        </div>
+        <div class="bet-controls">
+          <input
+            id="bet-amount"
+            type="number"
+            placeholder="Enter amount"
+            min="1"
+            step="1"
+          />
+          <div class="bet-buttons">
+            <button id="bet-increase">📈 Increase</button>
+            <button id="bet-decrease">📉 Decrease</button>
+          </div>
+        </div>
+        <div id="bet-status" class="bet-status"></div>
       </div>
     </div>
     <footer>

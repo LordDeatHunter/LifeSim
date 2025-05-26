@@ -11,6 +11,10 @@ public class SocketLogic
 
     public async Task HandleWebSocket(HttpContext context)
     {
+        var clientId = ClientId.GetClientId(context);
+        if (string.IsNullOrEmpty(clientId))
+            return;
+
         if (!context.WebSockets.IsWebSocketRequest) return;
 
         using var ws = await context.WebSockets.AcceptWebSocketAsync();

@@ -182,3 +182,50 @@ a.logo:hover {
     cursor: not-allowed;
   }
 }
+
+.betting-box {
+  background-color: #1e1e1e;
+  border: 2px solid #cecece;
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 40px;
+  width: 360px;
+  text-align: center;
+}
+
+.currency-display {
+  font-weight: bold;
+  margin-bottom: 12px;
+  font-size: 18px;
+}
+
+.bet-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bet-controls input {
+  padding: 6px;
+  border-radius: 8px;
+  border: 1px solid #cecece;
+  background-color: #161616;
+  color: #cecece;
+  text-align: center;
+}
+
+.bet-buttons {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.bet-buttons button {
+  flex: 1;
+}
+
+.bet-status {
+  margin-top: 12px;
+  font-style: italic;
+  color: #7fd0ff;
+}
