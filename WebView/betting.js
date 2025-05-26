@@ -7,11 +7,11 @@ const createBetStatusElement = ({ id, betType, amount, status, expiresAt }) => {
   const betMsg = document.createElement("div");
   betMsg.classList.add("bet-status");
   betMsg.classList.add(`bet-${betType}`);
-  betMsg.classList.add(`bet-${status.toLowerCase()}`);
   betMsg.id = `bet-${id}`;
 
   if (status !== "Pending") {
-    betMsg.textContent = `You bet ${amount} on ${betType}. Outcome: ${status}.`;
+    const statusClass = `bet-${status.toLowerCase()}`;
+    betMsg.innerHTML = `You bet ${amount} on ${betType}. <span class="${statusClass}">Outcome: ${status}</span>.`;
     return betMsg;
   }
 
@@ -102,8 +102,8 @@ const updateBet = (id) => {
 
       const betMsg = document.getElementById(`bet-${id}`);
       if (betMsg) {
-        betMsg.textContent = `You bet ${amount} on ${betType}. Outcome: ${status}.`;
-        betMsg.classList.add(`bet-${status.toLowerCase()}`);
+        const statusClass = `bet-${status.toLowerCase()}`;
+        betMsg.innerHTML = `You bet ${amount} on ${betType}. <span class="${statusClass}">Outcome: ${status}</span>.`;
       } else {
         console.error("Bet message element not found.");
       }
