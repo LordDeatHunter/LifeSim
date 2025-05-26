@@ -213,14 +213,19 @@ a.logo:hover {
   border-radius: 12px;
   padding: 20px;
   margin-top: 40px;
-  width: 360px;
+  width: 420px;
   text-align: center;
 }
 
-.currency-display {
+#currency-display {
   font-weight: bold;
   margin-bottom: 12px;
-  font-size: 18px;
+  font-size: 36px;
+  color: #ffd700;
+}
+
+.betting-icon {
+  font-size: 28px;
 }
 
 .bet-controls {
@@ -248,10 +253,51 @@ a.logo:hover {
   flex: 1;
 }
 
-.bet-status {
-  margin-top: 12px;
+#bet-statuses {
+  margin-top: 16px;
   font-style: italic;
+  font-size: 14px;
   color: #7fd0ff;
+  background: #161616;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #cecece;
+}
+
+#bet-statuses h3 {
+  font-size: 18px;
+  color: #cecece;
+}
+
+#bet-status-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.bet-status {
+  padding: 8px 4px;
+  border-radius: 8px;
+}
+
+.bet-increase {
+  border: 2px solid #4caf50;
+}
+
+.bet-decrease {
+  border: 2px solid #f44336;
+}
+
+.won-bet {
+  color: #22ff44;
+  font-weight: bold;
+}
+
+.lost-bet {
+  color: #ff4422;
+  font-weight: bold;
 }
 
 @media (prefers-color-scheme: light) {
@@ -267,8 +313,9 @@ a.logo:hover {
   }
 
   button:hover {
-    background-color: #f0f0f0;
-    color: #161616;
+    background-color: #161616;
+    color: #cecece;
+    border: 1px solid #cecece;
   }
 
   button:disabled {
@@ -288,5 +335,18 @@ a.logo:hover {
     background-color: #f0f0f0;
     color: #161616;
     border: 1px solid #161616;
+  }
+
+  #bet-statuses {
+    color: #007acc;
+    background: #f0f0f0;
+  }
+
+  #bet-statuses h3 {
+    color: #161616;
+  }
+
+  #currency-display {
+    color: #bb8700;
   }
 }

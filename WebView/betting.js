@@ -1,6 +1,7 @@
 let currencyDisplay;
 let betAmountElement;
 let betStatusDiv;
+let betStatusList;
 
 const getCurrency = async () =>
   fetch("http://localhost:5000/api/currency", {
@@ -13,7 +14,7 @@ const getCurrency = async () =>
 
 const setCurrencyDisplay = (currency) => {
   if (currencyDisplay) {
-    currencyDisplay.textContent = `Currency: ${currency}`;
+    currencyDisplay.textContent = `🪙${currency}`;
   } else {
     console.error("Currency display element not found.");
   }
@@ -39,9 +40,10 @@ const placeBet = async (betType) => {
     .then((currency) => {
       setCurrencyDisplay(currency);
       const betMsg = document.createElement("div");
-      betMsg.className = "bet-status";
+      betMsg.classList.add("bet-status");
+      betMsg.classList.add(`bet-${betType}`);
       betMsg.textContent = `You bet ${amount} on ${betType}. Waiting 30s...`;
-      betStatusDiv.appendChild(betMsg);
+      betStatusList.insertBefore(betMsg, betStatusList.firstChild);
       betAmountElement.value = "";
 
       let time = 30;
@@ -72,7 +74,8 @@ const updateCurrencyDisplay = () => {
 document.addEventListener("DOMContentLoaded", () => {
   currencyDisplay = document.getElementById("currency-display");
   betAmountElement = document.getElementById("bet-amount");
-  betStatusDiv = document.getElementById("bet-status");
+  betStatusDiv = document.getElementById("bet-statuses");
+  betStatusList = document.getElementById("bet-status-list");
 
   updateCurrencyDisplay();
 

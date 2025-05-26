@@ -62,24 +62,29 @@
         </div>
       </div>
       <div id="betting-menu" class="betting-box">
-        <h2>📈 Will animal count increase or decrease in next 30s?</h2>
-        <div id="currency-display">
-          Your currency: <span id="currency-amount">0</span>
-        </div>
+        <h2>
+          <span class="betting-icon">📈</span>Will the animal count change in
+          the next 30s?
+        </h2>
+        <div id="currency-display">💰<span id="currency-amount">310</span></div>
+
         <div class="bet-controls">
           <input
             id="bet-amount"
             type="number"
-            placeholder="Enter amount"
+            placeholder="Wager amount"
             min="1"
             step="1"
           />
           <div class="bet-buttons">
-            <button id="bet-increase">📈 Increase</button>
-            <button id="bet-decrease">📉 Decrease</button>
+            <button id="bet-increase">📈 Bet on Increase</button>
+            <button id="bet-decrease">📉 Bet on Decrease</button>
           </div>
         </div>
-        <div id="bet-status" class="bet-status"></div>
+        <div id="bet-statuses" class="bet-status">
+          <h3>Past Bets</h3>
+          <div id="bet-status-list"></div>
+        </div>
       </div>
     </div>
     <footer>
