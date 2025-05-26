@@ -3,6 +3,19 @@ let betAmountElement;
 let betStatusDiv;
 let betStatusList;
 
+const playCoinSound = () => {
+  const audio = new Audio("/coins.wav");
+  audio.play().catch((error) => {
+    console.error("Error playing sound:", error);
+  });
+};
+
+const handleFinishedBet = (div, { betType, amount, status }) => {
+  const statusClass = `bet-${status.toLowerCase()}`;
+  div.innerHTML = `You bet ${amount} on ${betType}. <span class="${statusClass}">Outcome: ${status}</span>.`;
+  return div;
+};
+
 const createBetStatusElement = ({ id, betType, amount, status, expiresAt }) => {
   const betMsg = document.createElement("div");
   betMsg.classList.add("bet-status");
@@ -10,8 +23,7 @@ const createBetStatusElement = ({ id, betType, amount, status, expiresAt }) => {
   betMsg.id = `bet-${id}`;
 
   if (status !== "Pending") {
-    const statusClass = `bet-${status.toLowerCase()}`;
-    betMsg.innerHTML = `You bet ${amount} on ${betType}. <span class="${statusClass}">Outcome: ${status}</span>.`;
+    handleFinishedBet(betMsg, { betType, amount, status });
     return betMsg;
   }
 
@@ -102,8 +114,10 @@ const updateBet = (id) => {
 
       const betMsg = document.getElementById(`bet-${id}`);
       if (betMsg) {
-        const statusClass = `bet-${status.toLowerCase()}`;
-        betMsg.innerHTML = `You bet ${amount} on ${betType}. <span class="${statusClass}">Outcome: ${status}</span>.`;
+        if (status === "Won") {
+          playCoinSound();
+        }
+        handleFinishedBet(betMsg, { betType, amount, status });
       } else {
         console.error("Bet message element not found.");
       }
