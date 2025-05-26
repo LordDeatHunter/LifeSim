@@ -90,7 +90,9 @@ public static class Program
 
         app.Map("/api/reignite_life", api.ReigniteLifeHandler);
         app.Map("/api/currency", api.GetCurrency);
-        app.Map("/api/bet", api.Bet);
+        app.Map("/api/place-bet", api.PlaceBet);
+        app.Map("/api/bets", api.GetBets);
+        app.Map("/api/bet/{id}", api.GetBetById);
         app.Map("/ws", socketLogic.HandleWebSocket);
 
         var stopwatch = new Stopwatch();

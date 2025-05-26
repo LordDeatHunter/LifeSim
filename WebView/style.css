@@ -290,12 +290,12 @@ a.logo:hover {
   border: 2px solid #f44336;
 }
 
-.won-bet {
+.bet-won {
   color: #22ff44;
   font-weight: bold;
 }
 
-.lost-bet {
+.bet-lost {
   color: #ff4422;
   font-weight: bold;
 }

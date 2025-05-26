@@ -2,20 +2,21 @@
 using System.Text.Json;
 using LifeSim.Data;
 using LifeSim.Utils;
+using Microsoft.AspNetCore.Mvc;
 
 namespace LifeSim.Network;
 
 public class LifeSimApi
 {
-    private readonly ConcurrentDictionary<string?, int> Currencies = new();
+    private readonly ConcurrentDictionary<string, int> Currencies = new();
+    private readonly ConcurrentDictionary<string, ConcurrentDictionary<Guid, PendingBet>> Bets = new();
     private readonly ConcurrentQueue<PendingBet> _pendingBets = new();
 
     public LifeSimApi()
     {
-
         Task.Run(HandleBets);
     }
-    
+
     public async void HandleBets()
     {
         try
@@ -36,12 +37,16 @@ public class LifeSimApi
                             if (Currencies.ContainsKey(bet.ClientId))
                                 Currencies[bet.ClientId] += bet.Amount;
                         }
+
+                        bet.Status = BetStatus.Expired;
                         continue;
                     }
 
                     var won = bet.BetType == "increase"
                         ? finalCount > bet.InitialCount
                         : finalCount < bet.InitialCount;
+
+                    bet.Status = won ? BetStatus.Won : BetStatus.Lost;
 
                     if (!won) continue;
 
@@ -96,7 +101,7 @@ public class LifeSimApi
         await context.Response.WriteAsJsonAsync(response);
     }
 
-    public async Task Bet(HttpContext context)
+    public async Task PlaceBet(HttpContext context)
     {
         var clientId = ClientId.GetClientId(context);
         if (string.IsNullOrEmpty(clientId) || !Currencies.TryGetValue(clientId, out var currency) || currency <= 0)
@@ -127,7 +132,8 @@ public class LifeSimApi
                 ? typeElem.GetString() ?? string.Empty
                 : string.Empty;
 
-            if (amount <= 0 || amount > currency || string.IsNullOrEmpty(betType) || (betType != "increase" && betType != "decrease"))
+            if (amount <= 0 || amount > currency || string.IsNullOrEmpty(betType) ||
+                (betType != "increase" && betType != "decrease"))
             {
                 context.Response.StatusCode = StatusCodes.Status400BadRequest;
                 return;
@@ -141,16 +147,91 @@ public class LifeSimApi
 
         Currencies[clientId] -= amount;
 
-        _pendingBets.Enqueue(new PendingBet(
+        var bet = new PendingBet(
             clientId,
             amount,
             betType,
             Program.World.Animals.Count,
             DateTime.UtcNow.AddSeconds(30)
-        ));
+        );
+
+        _pendingBets.Enqueue(bet);
+        if (!Bets.TryGetValue(clientId, out var bets))
+        {
+            bets = new ConcurrentDictionary<Guid, PendingBet>();
+            Bets[clientId] = bets;
+        }
+
+        bets[bet.Id] = bet;
 
         context.Response.ContentType = "application/json";
-        var response = new { currency = Currencies[clientId] };
+        var response = new
+        {
+            currency = Currencies[clientId],
+            bet = new 
+            {
+                id = bet.Id,
+                amount = bet.Amount,
+                betType = bet.BetType,
+                initialCount = bet.InitialCount,
+                expiresAt = bet.ExpiresAt,
+                status = bet.Status.ToString()
+            }
+        };
         await context.Response.WriteAsJsonAsync(response);
+    }
+
+    public async Task GetBets(HttpContext context)
+    {
+        var clientId = ClientId.GetClientId(context);
+        if (string.IsNullOrEmpty(clientId))
+        {
+            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+            return;
+        }
+
+        if (!Bets.TryGetValue(clientId, out var bets))
+        {
+            bets = new ConcurrentDictionary<Guid, PendingBet>();
+            Bets[clientId] = bets;
+        }
+        
+        var mappedBets = bets.Values
+            .Select(bet => new
+            {
+                id = bet.Id,
+                amount = bet.Amount,
+                betType = bet.BetType,
+                initialCount = bet.InitialCount,
+                expiresAt = bet.ExpiresAt,
+                status = bet.Status.ToString()
+            })
+            .OrderBy(bet => bet.expiresAt)
+            .ToList();
+
+        context.Response.ContentType = "application/json";
+
+        await context.Response.WriteAsJsonAsync(mappedBets);
+    }
+    
+    public async Task GetBetById(HttpContext context, Guid id)
+    {
+        var clientId = ClientId.GetClientId(context);
+        if (string.IsNullOrEmpty(clientId) || !Bets.TryGetValue(clientId, out var bets) || !bets.TryGetValue(id, out var bet))
+        {
+            context.Response.StatusCode = StatusCodes.Status404NotFound;
+            return;
+        }
+
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsJsonAsync(new
+        {
+            id = bet.Id,
+            amount = bet.Amount,
+            betType = bet.BetType,
+            initialCount = bet.InitialCount,
+            expiresAt = bet.ExpiresAt,
+            status = bet.Status.ToString()
+        });
     }
 }
