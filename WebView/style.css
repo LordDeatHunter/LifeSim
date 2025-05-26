@@ -10,7 +10,9 @@ body {
   background-color: #161616;
   color: #cecece;
   height: 100%;
-  font-family: Roboto, sans-serif;
+  font-family: "Share Tech Mono", monospace;
+  font-weight: 400;
+  font-style: normal;
   display: flex;
   flex-direction: column;
 }
@@ -100,6 +102,16 @@ body {
     align-items: center;
     justify-content: space-around;
   }
+}
+
+.entity-category-display {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.animal-type-display {
+  font-size: 16px;
+  font-weight: 400;
 }
 
 footer {
