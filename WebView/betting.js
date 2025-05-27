@@ -1,13 +1,17 @@
 const API_ENDPOINT = "http://localhost:5000/api";
 
 let balanceDisplay;
-let betAmountElement;
+let betAmountInput;
 let betStatusDiv;
 let betStatusList;
 let balanceLeaderboardDiv;
 let betsLeaderboardDiv;
 let nameInput;
 let nameSubmitButton;
+let maxBetButton;
+let minBetButton;
+
+let maxBalance = 0;
 
 const playCoinSound = () => {
   const audio = new Audio("/coins.wav");
@@ -104,15 +108,16 @@ const getBalance = async () =>
   });
 
 const setBalanceDisplay = (balance) => {
+  maxBalance = balance;
   if (balanceDisplay) {
-    balanceDisplay.textContent = `🪙${balance}`;
+    balanceDisplay.textContent = `🪙${maxBalance}`;
   } else {
     console.error("Balance display element not found.");
   }
 };
 
 const placeBet = async (betType) => {
-  const amount = parseInt(betAmountElement.value, 10);
+  const amount = parseInt(betAmountInput.value, 10);
   if (isNaN(amount) || amount <= 0 || !Number.isSafeInteger(amount)) {
     console.error("Invalid bet amount.");
     return;
@@ -135,7 +140,7 @@ const placeBet = async (betType) => {
       const betMsg = createBetStatusElement(bet);
 
       betStatusList.insertBefore(betMsg, betStatusList.firstChild);
-      betAmountElement.value = "";
+      betAmountInput.value = "";
     })
     .catch((error) => {
       console.error("Error placing bet:", error);
@@ -181,7 +186,7 @@ const updateBet = (id) => {
 
 document.addEventListener("DOMContentLoaded", () => {
   balanceDisplay = document.getElementById("balance-display");
-  betAmountElement = document.getElementById("bet-amount");
+  betAmountInput = document.getElementById("bet-amount");
   betStatusDiv = document.getElementById("bet-statuses");
   betStatusList = document.getElementById("bet-status-list");
   balanceLeaderboardDiv = document.getElementById("balance-leaderboard");
@@ -212,6 +217,16 @@ document.addEventListener("DOMContentLoaded", () => {
       .catch((error) => {
         console.error("Error setting name:", error);
       });
+  };
+
+  maxBetButton = document.getElementById("max-bet-button");
+  maxBetButton.onclick = () => {
+    betAmountInput.value = maxBalance.toString();
+  };
+
+  minBetButton = document.getElementById("min-bet-button");
+  minBetButton.onclick = () => {
+    betAmountInput.value = "1";
   };
 
   updateBalanceDisplay();

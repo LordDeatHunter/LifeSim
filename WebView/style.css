@@ -326,6 +326,15 @@ input {
   font-weight: bold;
 }
 
+.bet-input {
+  display: flex;
+  gap: 8px;
+}
+
+.bet-input input {
+  flex: 1;
+}
+
 @media (prefers-color-scheme: light) {
   body {
     background-color: #f0f0f0;

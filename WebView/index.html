@@ -69,13 +69,17 @@
         <div id="balance-display">💰<span id="balance-amount">0</span></div>
 
         <div class="bet-controls">
-          <input
-            id="bet-amount"
-            type="number"
-            placeholder="Wager amount"
-            min="1"
-            step="1"
-          />
+          <div class="bet-input">
+            <button id="min-bet-button">Min</button>
+            <input
+              id="bet-amount"
+              type="number"
+              placeholder="Wager amount"
+              min="1"
+              step="1"
+            />
+            <button id="max-bet-button">Max</button>
+          </div>
           <div class="bet-buttons">
             <button id="bet-increase">📈 Bet on Increase</button>
             <button id="bet-decrease">📉 Bet on Decrease</button>
