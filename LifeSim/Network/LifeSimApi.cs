@@ -8,8 +8,8 @@ namespace LifeSim.Network;
 
 public class LifeSimApi
 {
-    private readonly ConcurrentDictionary<string, int> Currencies = new();
-    private readonly ConcurrentDictionary<string, ConcurrentDictionary<Guid, PendingBet>> Bets = new();
+    private readonly ConcurrentDictionary<string, int> _balances = new();
+    private readonly ConcurrentDictionary<string, ConcurrentDictionary<Guid, PendingBet>> _bets = new();
     private readonly ConcurrentQueue<PendingBet> _pendingBets = new();
 
     public LifeSimApi()
@@ -31,15 +31,15 @@ public class LifeSimApi
 
             while (true)
             {
-                foreach (var clientId in Currencies.Keys)
+                foreach (var clientId in _balances.Keys)
                 {
-                    if (!Currencies.TryGetValue(clientId, out var currency))
+                    if (!_balances.TryGetValue(clientId, out var balance))
                     {
-                        Currencies[clientId] = 0;
+                        _balances[clientId] = 0;
                     }
 
-                    if (currency > 0) continue;
-                    Currencies[clientId] = currency + 100;
+                    if (balance > 0) continue;
+                    _balances[clientId] = balance + 100;
                 }
 
                 await Task.Delay(TimeSpan.FromMinutes(30));
@@ -66,10 +66,10 @@ public class LifeSimApi
 
                     if (finalCount == bet.InitialCount)
                     {
-                        lock (Currencies)
+                        lock (_balances)
                         {
-                            if (Currencies.ContainsKey(bet.ClientId))
-                                Currencies[bet.ClientId] += bet.Amount;
+                            if (_balances.ContainsKey(bet.ClientId))
+                                _balances[bet.ClientId] += bet.Amount;
                         }
 
                         bet.Status = BetStatus.Expired;
@@ -84,10 +84,10 @@ public class LifeSimApi
 
                     if (!won) continue;
 
-                    lock (Currencies)
+                    lock (_balances)
                     {
-                        if (Currencies.ContainsKey(bet.ClientId))
-                            Currencies[bet.ClientId] += bet.Amount * 2;
+                        if (_balances.ContainsKey(bet.ClientId))
+                            _balances[bet.ClientId] += bet.Amount * 2;
                     }
                 }
 
@@ -112,7 +112,7 @@ public class LifeSimApi
         return Task.CompletedTask;
     }
 
-    public async Task GetCurrency(HttpContext context)
+    public async Task GetBalance(HttpContext context)
     {
         var clientId = ClientId.GetClientId(context);
         if (string.IsNullOrEmpty(clientId))
@@ -121,16 +121,16 @@ public class LifeSimApi
             return;
         }
 
-        if (!Currencies.TryGetValue(clientId, out var currency))
+        if (!_balances.TryGetValue(clientId, out var balance))
         {
-            currency = 100;
-            Currencies[clientId] = currency;
+            balance = 100;
+            _balances[clientId] = balance;
         }
 
         context.Response.ContentType = "application/json";
         var response = new
         {
-            currency
+            balance
         };
         await context.Response.WriteAsJsonAsync(response);
     }
@@ -138,7 +138,7 @@ public class LifeSimApi
     public async Task PlaceBet(HttpContext context)
     {
         var clientId = ClientId.GetClientId(context);
-        if (string.IsNullOrEmpty(clientId) || !Currencies.TryGetValue(clientId, out var currency) || currency <= 0)
+        if (string.IsNullOrEmpty(clientId) || !_balances.TryGetValue(clientId, out var balance) || balance <= 0)
         {
             context.Response.StatusCode = StatusCodes.Status400BadRequest;
             return;
@@ -166,7 +166,7 @@ public class LifeSimApi
                 ? typeElem.GetString() ?? string.Empty
                 : string.Empty;
 
-            if (amount <= 0 || amount > currency || string.IsNullOrEmpty(betType) ||
+            if (amount <= 0 || amount > balance || string.IsNullOrEmpty(betType) ||
                 (betType != "increase" && betType != "decrease"))
             {
                 context.Response.StatusCode = StatusCodes.Status400BadRequest;
@@ -179,7 +179,7 @@ public class LifeSimApi
             return;
         }
 
-        Currencies[clientId] -= amount;
+        _balances[clientId] -= amount;
 
         var bet = new PendingBet(
             clientId,
@@ -190,10 +190,10 @@ public class LifeSimApi
         );
 
         _pendingBets.Enqueue(bet);
-        if (!Bets.TryGetValue(clientId, out var bets))
+        if (!_bets.TryGetValue(clientId, out var bets))
         {
             bets = new ConcurrentDictionary<Guid, PendingBet>();
-            Bets[clientId] = bets;
+            _bets[clientId] = bets;
         }
 
         bets[bet.Id] = bet;
@@ -201,7 +201,7 @@ public class LifeSimApi
         context.Response.ContentType = "application/json";
         var response = new
         {
-            currency = Currencies[clientId],
+            balance = _balances[clientId],
             bet = new
             {
                 id = bet.Id,
@@ -224,10 +224,10 @@ public class LifeSimApi
             return;
         }
 
-        if (!Bets.TryGetValue(clientId, out var bets))
+        if (!_bets.TryGetValue(clientId, out var bets))
         {
             bets = new ConcurrentDictionary<Guid, PendingBet>();
-            Bets[clientId] = bets;
+            _bets[clientId] = bets;
         }
 
         var mappedBets = bets.Values
@@ -251,7 +251,7 @@ public class LifeSimApi
     public async Task GetBetById(HttpContext context, Guid id)
     {
         var clientId = ClientId.GetClientId(context);
-        if (string.IsNullOrEmpty(clientId) || !Bets.TryGetValue(clientId, out var bets) || !bets.TryGetValue(id, out var bet))
+        if (string.IsNullOrEmpty(clientId) || !_bets.TryGetValue(clientId, out var bets) || !bets.TryGetValue(id, out var bet))
         {
             context.Response.StatusCode = StatusCodes.Status404NotFound;
             return;

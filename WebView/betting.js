@@ -1,4 +1,4 @@
-let currencyDisplay;
+let balanceDisplay;
 let betAmountElement;
 let betStatusDiv;
 let betStatusList;
@@ -34,7 +34,7 @@ const createBetStatusElement = ({ id, betType, amount, status, expiresAt }) => {
   const interval = setInterval(() => {
     betMsg.textContent = `You bet ${amount} on ${betType}. Waiting ${--time}s...`;
     if (time < 0) {
-      updateCurrencyDisplay();
+      updateBalanceDisplay();
       updateBet(id);
       clearInterval(interval);
     }
@@ -42,8 +42,8 @@ const createBetStatusElement = ({ id, betType, amount, status, expiresAt }) => {
   return betMsg;
 };
 
-const getCurrency = async () =>
-  fetch("http://localhost:5000/api/currency", {
+const getBalance = async () =>
+  fetch("http://localhost:5000/api/balance", {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -51,11 +51,11 @@ const getCurrency = async () =>
     credentials: "include",
   });
 
-const setCurrencyDisplay = (currency) => {
-  if (currencyDisplay) {
-    currencyDisplay.textContent = `🪙${currency}`;
+const setBalanceDisplay = (balance) => {
+  if (balanceDisplay) {
+    balanceDisplay.textContent = `🪙${balance}`;
   } else {
-    console.error("Currency display element not found.");
+    console.error("Balance display element not found.");
   }
 };
 
@@ -76,9 +76,9 @@ const placeBet = async (betType) => {
   })
     .then((response) => response.json())
     .then((json) => {
-      const { currency, bet } = json;
+      const { balance, bet } = json;
 
-      setCurrencyDisplay(currency);
+      setBalanceDisplay(balance);
 
       const betMsg = createBetStatusElement(bet);
 
@@ -90,13 +90,13 @@ const placeBet = async (betType) => {
     });
 };
 
-const updateCurrencyDisplay = () => {
-  getCurrency()
+const updateBalanceDisplay = () => {
+  getBalance()
     .then((response) => response.json())
-    .then((data) => data.currency)
-    .then(setCurrencyDisplay)
+    .then((data) => data.balance)
+    .then(setBalanceDisplay)
     .catch((error) => {
-      console.error("Error fetching currency:", error);
+      console.error("Error fetching balance:", error);
     });
 };
 
@@ -128,12 +128,12 @@ const updateBet = (id) => {
 };
 
 document.addEventListener("DOMContentLoaded", () => {
-  currencyDisplay = document.getElementById("currency-display");
+  balanceDisplay = document.getElementById("balance-display");
   betAmountElement = document.getElementById("bet-amount");
   betStatusDiv = document.getElementById("bet-statuses");
   betStatusList = document.getElementById("bet-status-list");
 
-  updateCurrencyDisplay();
+  updateBalanceDisplay();
 
   document.getElementById("bet-increase").onclick = () => {
     placeBet("increase");

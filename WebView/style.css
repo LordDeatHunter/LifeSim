@@ -217,7 +217,7 @@ a.logo:hover {
   text-align: center;
 }
 
-#currency-display {
+#balance-display {
   font-weight: bold;
   margin-bottom: 12px;
   font-size: 36px;
@@ -346,7 +346,7 @@ a.logo:hover {
     color: #161616;
   }
 
-  #currency-display {
+  #balance-display {
     color: #bb8700;
   }
 }
