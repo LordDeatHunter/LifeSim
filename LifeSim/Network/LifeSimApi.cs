@@ -15,6 +15,40 @@ public class LifeSimApi
     public LifeSimApi()
     {
         Task.Run(HandleBets);
+        Task.Run(GiveOutWelfare);
+    }
+
+    public async void GiveOutWelfare()
+    {
+        try
+        {
+            var now = DateTime.UtcNow;
+            var nextHour = new DateTime(now.Year, now.Month, now.Day, now.Hour, 0, 0, DateTimeKind.Utc).AddHours(0.5);
+            if (nextHour <= now) nextHour = nextHour.AddHours(0.5);
+            var timeToNextHour = nextHour - now;
+
+            await Task.Delay(timeToNextHour);
+
+            while (true)
+            {
+                foreach (var clientId in Currencies.Keys)
+                {
+                    if (!Currencies.TryGetValue(clientId, out var currency))
+                    {
+                        Currencies[clientId] = 0;
+                    }
+
+                    if (currency > 0) continue;
+                    Currencies[clientId] = currency + 100;
+                }
+
+                await Task.Delay(TimeSpan.FromMinutes(30));
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error in GiveOutWelfare: " + ex.Message);
+        }
     }
 
     public async void HandleBets()
@@ -168,7 +202,7 @@ public class LifeSimApi
         var response = new
         {
             currency = Currencies[clientId],
-            bet = new 
+            bet = new
             {
                 id = bet.Id,
                 amount = bet.Amount,
@@ -195,7 +229,7 @@ public class LifeSimApi
             bets = new ConcurrentDictionary<Guid, PendingBet>();
             Bets[clientId] = bets;
         }
-        
+
         var mappedBets = bets.Values
             .Select(bet => new
             {
@@ -213,7 +247,7 @@ public class LifeSimApi
 
         await context.Response.WriteAsJsonAsync(mappedBets);
     }
-    
+
     public async Task GetBetById(HttpContext context, Guid id)
     {
         var clientId = ClientId.GetClientId(context);
