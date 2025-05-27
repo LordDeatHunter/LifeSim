@@ -26,7 +26,7 @@ const handleFinishedBet = (div, { betType, amount, status }) => {
   return div;
 };
 
-const createLeaderboardEntry = (username, score) => {
+const createLeaderboardEntry = (username, score, betCount = undefined) => {
   const entry = document.createElement("div");
   entry.classList.add("leaderboard-entry");
 
@@ -36,7 +36,12 @@ const createLeaderboardEntry = (username, score) => {
 
   const scoreSpan = document.createElement("span");
   scoreSpan.classList.add("leaderboard-score");
-  scoreSpan.textContent = score;
+  if (betCount !== undefined) {
+    scoreSpan.classList.add("leaderboard-bet-count");
+    scoreSpan.textContent = `🪙${score} (in ${betCount} bets)`;
+  } else {
+    scoreSpan.textContent = `🪙${score}`;
+  }
 
   entry.appendChild(usernameSpan);
   entry.appendChild(scoreSpan);
@@ -64,7 +69,11 @@ const createLeaderboards = async () =>
       });
 
       topBets.forEach((item) => {
-        const entry = createLeaderboardEntry(item.name, item.score);
+        const entry = createLeaderboardEntry(
+          item.name,
+          item.score,
+          item.betCount,
+        );
         betsLeaderboardDiv.appendChild(entry);
       });
     })
