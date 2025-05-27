@@ -66,7 +66,7 @@
           <span class="betting-icon">📈</span>Will the animal count change in
           the next 30s?
         </h2>
-        <div id="balance-display">💰<span id="balance-amount">310</span></div>
+        <div id="balance-display">💰<span id="balance-amount">0</span></div>
 
         <div class="bet-controls">
           <input
@@ -87,7 +87,10 @@
         </div>
       </div>
       <div id="leaderboard">
-        <h2>Leaderboard</h2>
+        <h2>Leaderboard (auto-refresh every 3m)</h2>
+        <label for="name-input">Username: </label>
+        <input class="name-input" type="text" id="name-input" />
+        <button id="submit-name-button">Save</button>
         <h3>Top Balances</h3>
         <div id="balance-leaderboard" class="leaderboard-list"></div>
         <h3>Top Bets</h3>

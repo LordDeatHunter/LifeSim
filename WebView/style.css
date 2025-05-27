@@ -234,7 +234,7 @@ a.logo:hover {
   gap: 12px;
 }
 
-.bet-controls input {
+input {
   padding: 6px;
   border-radius: 8px;
   border: 1px solid #cecece;
@@ -357,7 +357,7 @@ a.logo:hover {
     color: #161616;
   }
 
-  .bet-controls input {
+  input {
     background-color: #f0f0f0;
     color: #161616;
     border: 1px solid #161616;

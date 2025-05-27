@@ -8,9 +8,11 @@ namespace LifeSim.Network;
 
 public class LifeSimApi
 {
+    // TODO: Implement proper classes & storage for these
     private readonly ConcurrentDictionary<string, int> _balances = new();
     private readonly ConcurrentDictionary<string, ConcurrentDictionary<Guid, PendingBet>> _bets = new();
     private readonly ConcurrentQueue<PendingBet> _pendingBets = new();
+    private readonly ConcurrentDictionary<string, string> _names = new();
 
     public LifeSimApi()
     {
@@ -110,7 +112,7 @@ public class LifeSimApi
             .Take(10)
             .Select(kvp => new
             {
-                clientId = kvp.Key,
+                name = _names.GetValueOrDefault(kvp.Key, "Unnamed"),
                 score = kvp.Value
             })
             .ToList();
@@ -121,7 +123,7 @@ public class LifeSimApi
             .Take(10)
             .Select(kvp => new
             {
-                clientId = kvp.Key,
+                name = _names.GetValueOrDefault(kvp.Key, "Unnamed"),
                 score = kvp.Value
             })
             .ToList();
@@ -303,5 +305,52 @@ public class LifeSimApi
             expiresAt = bet.ExpiresAt,
             status = bet.Status.ToString()
         });
+    }
+
+    public async Task SetName(HttpContext context)
+    {
+        var clientId = ClientId.GetClientId(context);
+        if (string.IsNullOrEmpty(clientId))
+        {
+            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+            return;
+        }
+
+        string name;
+
+        try
+        {
+            using var reader = new StreamReader(context.Request.Body);
+            var body = await reader.ReadToEndAsync();
+            var json = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(body);
+
+            if (json == null || !json.TryGetValue("name", out var nameElem) ||
+                nameElem.ValueKind != JsonValueKind.String || string.IsNullOrEmpty(nameElem.GetString()))
+            {
+                context.Response.StatusCode = StatusCodes.Status400BadRequest;
+                return;
+            }
+
+            name = nameElem.GetString()!.Trim().Replace(" ", "_");
+            var originalNameLength = name.Length;
+            if (originalNameLength is < 3 or > 20)
+            {
+                context.Response.StatusCode = StatusCodes.Status400BadRequest;
+                return;
+            }
+
+            for (var i = 1; _names.Values.Contains(name); i++)
+            {
+                name = $"{name[..(originalNameLength - 1)]}_{i}";
+            }
+        }
+        catch
+        {
+            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            return;
+        }
+
+        _names[clientId] = name;
+        context.Response.StatusCode = StatusCodes.Status204NoContent;
     }
 }

@@ -6,6 +6,8 @@ let betStatusDiv;
 let betStatusList;
 let balanceLeaderboardDiv;
 let betsLeaderboardDiv;
+let nameInput;
+let nameSubmitButton;
 
 const playCoinSound = () => {
   const audio = new Audio("/coins.wav");
@@ -53,12 +55,12 @@ const createLeaderboards = async () =>
       betsLeaderboardDiv.innerHTML = "";
 
       topBalances.forEach((item) => {
-        const entry = createLeaderboardEntry(item.clientId, item.score);
+        const entry = createLeaderboardEntry(item.name, item.score);
         balanceLeaderboardDiv.appendChild(entry);
       });
 
       topBets.forEach((item) => {
-        const entry = createLeaderboardEntry(item.clientId, item.score);
+        const entry = createLeaderboardEntry(item.name, item.score);
         betsLeaderboardDiv.appendChild(entry);
       });
     })
@@ -184,6 +186,33 @@ document.addEventListener("DOMContentLoaded", () => {
   betStatusList = document.getElementById("bet-status-list");
   balanceLeaderboardDiv = document.getElementById("balance-leaderboard");
   betsLeaderboardDiv = document.getElementById("bets-leaderboard");
+  nameInput = document.getElementById("name-input");
+  nameSubmitButton = document.getElementById("submit-name-button");
+
+  nameSubmitButton.onclick = () => {
+    const name = nameInput.value.trim().replaceAll(/\s+/g, " ");
+    if (!name || name.length < 3 || name.length > 20) {
+      alert("Please enter a username between 3 and 20 characters.");
+      return;
+    }
+    fetch(`${API_ENDPOINT}/set-name`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ name }),
+      credentials: "include",
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Failed to set name.");
+        }
+        createLeaderboards();
+      })
+      .catch((error) => {
+        console.error("Error setting name:", error);
+      });
+  };
 
   updateBalanceDisplay();
   createLeaderboards();
