@@ -300,6 +300,32 @@ a.logo:hover {
   font-weight: bold;
 }
 
+#leaderboard {
+  margin-top: 40px;
+  width: 100%;
+  max-width: 600px;
+  background-color: #1e1e1e;
+  border: 2px solid #cecece;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.leaderboard-entry {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #cecece;
+}
+
+.leaderboard-name {
+  color: #cecece;
+}
+
+.leaderboard-score {
+  color: #ffd700;
+  font-weight: bold;
+}
+
 @media (prefers-color-scheme: light) {
   body {
     background-color: #f0f0f0;
@@ -347,6 +373,20 @@ a.logo:hover {
   }
 
   #balance-display {
+    color: #bb8700;
+  }
+
+  #leaderboard {
+    background-color: #f0f0f0;
+    border: 2px solid #161616;
+    color: #161616;
+  }
+
+  .leaderboard-entry {
+    border-bottom: 1px solid #161616;
+  }
+
+  .leaderboard-score {
     color: #bb8700;
   }
 }

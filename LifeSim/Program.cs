@@ -93,6 +93,7 @@ public static class Program
         app.Map("/api/place-bet", api.PlaceBet);
         app.Map("/api/bets", api.GetBets);
         app.Map("/api/bet/{id}", api.GetBetById);
+        app.Map("/api/leaderboards", api.GetLeaderboards);
         app.Map("/ws", socketLogic.HandleWebSocket);
 
         var stopwatch = new Stopwatch();

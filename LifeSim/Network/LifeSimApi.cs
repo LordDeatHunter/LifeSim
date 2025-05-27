@@ -100,6 +100,41 @@ public class LifeSimApi
         }
     }
 
+    public async Task GetLeaderboards(HttpContext context)
+    {
+        var topBets = _bets
+            .SelectMany(kvp => kvp.Value.Values)
+            .GroupBy(bet => bet.ClientId)
+            .ToDictionary(g => g.Key, g => g.Sum(bet => bet.Amount))
+            .OrderByDescending(kvp => kvp.Value)
+            .Take(10)
+            .Select(kvp => new
+            {
+                clientId = kvp.Key,
+                score = kvp.Value
+            })
+            .ToList();
+
+        var topBalances = _balances
+            .Where(kvp => kvp.Value > 0)
+            .OrderByDescending(kvp => kvp.Value)
+            .Take(10)
+            .Select(kvp => new
+            {
+                clientId = kvp.Key,
+                score = kvp.Value
+            })
+            .ToList();
+
+        var response = new
+        {
+            topBets,
+            topBalances
+        };
+
+        await context.Response.WriteAsJsonAsync(response);
+    }
+
     public Task ReigniteLifeHandler()
     {
         if (!Program.World.Animals.IsEmpty) return Task.CompletedTask;
@@ -251,7 +286,8 @@ public class LifeSimApi
     public async Task GetBetById(HttpContext context, Guid id)
     {
         var clientId = ClientId.GetClientId(context);
-        if (string.IsNullOrEmpty(clientId) || !_bets.TryGetValue(clientId, out var bets) || !bets.TryGetValue(id, out var bet))
+        if (string.IsNullOrEmpty(clientId) || !_bets.TryGetValue(clientId, out var bets) ||
+            !bets.TryGetValue(id, out var bet))
         {
             context.Response.StatusCode = StatusCodes.Status404NotFound;
             return;
