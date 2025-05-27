@@ -331,6 +331,13 @@ public class LifeSimApi
             }
 
             name = nameElem.GetString()!.Trim().Replace(" ", "_");
+
+            if (_names.TryGetValue(clientId, out var value) && value == name)
+            {
+                context.Response.StatusCode = StatusCodes.Status204NoContent;
+                return;
+            }
+
             var originalNameLength = name.Length;
             if (originalNameLength is < 3 or > 20)
             {
@@ -340,7 +347,7 @@ public class LifeSimApi
 
             for (var i = 1; _names.Values.Contains(name); i++)
             {
-                name = $"{name[..(originalNameLength - 1)]}_{i}";
+                name = $"{name[..(originalNameLength)]}_{i}";
             }
         }
         catch
