@@ -105,9 +105,9 @@ public class LifeSimApi
     public async Task GetLeaderboards(HttpContext context)
     {
         var topBets = _bets
-            .SelectMany(kvp => kvp.Value.Values)
+            .SelectMany(kvp => kvp.Value.Values.Where(bet => bet.Status == BetStatus.Won))
             .GroupBy(bet => bet.ClientId)
-            .ToDictionary(g => g.Key, g => g.Sum(bet => bet.Amount))
+            .ToDictionary(g => g.Key, g => g.Count())
             .OrderByDescending(kvp => kvp.Value)
             .Take(10)
             .Select(kvp => new
@@ -118,7 +118,6 @@ public class LifeSimApi
             .ToList();
 
         var topBalances = _balances
-            .Where(kvp => kvp.Value > 0)
             .OrderByDescending(kvp => kvp.Value)
             .Take(10)
             .Select(kvp => new
