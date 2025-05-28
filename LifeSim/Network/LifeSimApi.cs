@@ -107,16 +107,21 @@ public class LifeSimApi
         var wonBets = _bets
             .SelectMany(kvp => kvp.Value.Values.Where(bet => bet.Status == BetStatus.Won))
             .GroupBy(bet => bet.ClientId)
-            .ToDictionary(g => g.Key, g => g.Count());
-        
+            .ToDictionary(g => g.Key, g =>
+                new
+                {
+                    count = g.Count(),
+                    sum = g.Sum(bet => bet.Amount)
+                });
+
         var topBets = wonBets
             .OrderByDescending(kvp => kvp.Value)
             .Take(10)
             .Select(kvp => new
             {
                 name = _names.GetValueOrDefault(kvp.Key, "Unnamed"),
-                score = kvp.Value,
-                betCount = wonBets.GetValueOrDefault(kvp.Key, 0)
+                score = kvp.Value.sum,
+                betCount = kvp.Value.count
             })
             .ToList();
 
@@ -205,7 +210,7 @@ public class LifeSimApi
                 ? typeElem.GetString() ?? string.Empty
                 : string.Empty;
 
-            if (amount <= 0 || amount > balance || string.IsNullOrEmpty(betType) ||
+            if (amount < 1 || amount > balance || string.IsNullOrEmpty(betType) ||
                 (betType != "increase" && betType != "decrease"))
             {
                 context.Response.StatusCode = StatusCodes.Status400BadRequest;
