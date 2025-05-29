@@ -115,7 +115,7 @@ public class LifeSimApi
                 });
 
         var topBets = wonBets
-            .OrderByDescending(kvp => kvp.Value)
+            .OrderByDescending(kvp => kvp.Value.sum)
             .Take(10)
             .Select(kvp => new
             {
