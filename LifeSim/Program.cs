@@ -30,15 +30,6 @@ public static class Program
         var previousAnimals = new Dictionary<string, AnimalDto>();
         var previousFoods = new Dictionary<string, FoodDto>();
 
-        for (var i = 0; i <= 32; i++)
-        for (var j = 0; j <= 32; j++)
-        {
-            var chunkPos = new Vector2(i, j);
-            World.Chunks[chunkPos] = new Chunk(chunkPos);
-        }
-
-        World.SpawnFood(400, 0, 1024);
-
         AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
         {
             Console.WriteLine("Unhandled exception: " + e.ExceptionObject);

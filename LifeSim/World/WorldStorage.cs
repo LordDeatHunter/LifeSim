@@ -21,6 +21,16 @@ public class WorldStorage
     public ConcurrentDictionary<string, AnimalDto> GetAnimalDtos() => new(Animals.Values.ToList().Select(a => (AnimalDto)a.ToDTO()).ToDictionary(a => a.id, a => a));
     public ConcurrentDictionary<string, FoodDto> GetFoodDtos() => new(Foods.Values.ToList().Select(f => (FoodDto)f.ToDTO()).ToDictionary(f => f.id, f => f));
 
+    public WorldStorage()
+    {
+        for (var i = 0; i <= 32; i++)
+        for (var j = 0; j <= 32; j++)
+        {
+            var chunkPos = new Vector2(i, j);
+            Chunks[chunkPos] = new Chunk(chunkPos);
+        }
+    }
+
     public void SpawnFood(int amount, Vector2 startPosition, Vector2 endPosition)
     {
         for (var i = 0; i < amount; i++)
