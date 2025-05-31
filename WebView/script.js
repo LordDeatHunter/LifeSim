@@ -71,6 +71,13 @@ let createConnection = () => {
     };
 
     for (const animal of Object.values(entities["animal"])) {
+      if (animal.predationInclanation <= 0.33) {
+        animal.foodType = "HERBIVORE";
+      } else if (animal.predationInclanation <= 0.66) {
+        animal.foodType = "OMNIVORE";
+      } else {
+        animal.foodType = "CARNIVORE";
+      }
       animalCounts[animal.foodType] += 1;
     }
 

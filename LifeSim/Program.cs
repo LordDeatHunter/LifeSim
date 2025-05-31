@@ -118,7 +118,7 @@ public static class Program
 
                 if (World.Foods.Count < 1000)
                 {
-                    var foodAmount = RandomUtils.RNG.Next(0, 10);
+                    var foodAmount = RandomUtils.RNG.Next(0, 6);
                     World.SpawnFood(foodAmount, 0, 1024);
                 }
 
@@ -160,7 +160,7 @@ public static class Program
                         if (curr.y != old.y) diff["y"] = curr.y;
                         if (curr.color != old.color) diff["color"] = curr.color;
                         if (curr.size != old.size) diff["size"] = curr.size;
-                        if (curr.foodType != old.foodType) diff["foodType"] = curr.foodType;
+                        if (curr.predationInclanation != old.predationInclanation) diff["predationInclanation"] = curr.predationInclanation;
 
                         if (diff.Count > 0)
                             updatedAnimals[id] = diff;

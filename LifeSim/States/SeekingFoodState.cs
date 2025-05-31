@@ -8,7 +8,7 @@ public class SeekingFoodState : IAnimalState
 
     public void Enter(Animal animal)
     {
-        animal.Target = animal.FindNearestFood();
+        animal.Target = animal.FindNearestTarget();
     }
 
     public void Update(Animal animal, float deltaTime)
