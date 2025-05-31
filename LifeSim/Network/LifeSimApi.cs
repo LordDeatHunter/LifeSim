@@ -9,7 +9,7 @@ namespace LifeSim.Network;
 public class LifeSimApi
 {
     // TODO: Implement proper classes & storage for these
-    private readonly ConcurrentDictionary<string, int> _balances = new();
+    private readonly ConcurrentDictionary<string, ulong> _balances = new();
     private readonly ConcurrentDictionary<string, ConcurrentDictionary<Guid, PendingBet>> _bets = new();
     private readonly ConcurrentQueue<PendingBet> _pendingBets = new();
     private readonly ConcurrentDictionary<string, string> _names = new();
@@ -111,7 +111,7 @@ public class LifeSimApi
                 new
                 {
                     count = g.Count(),
-                    sum = g.Sum(bet => bet.Amount)
+                    sum = g.Aggregate(0UL, (acc, bet) => acc + bet.Amount)
                 });
 
         var topBets = wonBets
@@ -188,7 +188,7 @@ public class LifeSimApi
             return;
         }
 
-        int amount;
+        ulong amount;
         string betType;
 
         try
@@ -203,9 +203,16 @@ public class LifeSimApi
                 return;
             }
 
-            amount = json.TryGetValue("amount", out var amtElem) && amtElem.TryGetInt32(out var val)
-                ? val
-                : -1;
+            if (json.TryGetValue("amount", out var amtElem) && amtElem.TryGetUInt64(out var val))
+            {
+                amount = val;
+            }
+            else
+            {
+                context.Response.StatusCode = StatusCodes.Status400BadRequest;
+                return;
+            }
+
             betType = json.TryGetValue("betType", out var typeElem) && typeElem.ValueKind == JsonValueKind.String
                 ? typeElem.GetString() ?? string.Empty
                 : string.Empty;
