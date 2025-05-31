@@ -310,11 +310,26 @@ input {
   padding: 20px;
 }
 
+.leaderboard-list {
+  counter-reset: section;
+}
+
 .leaderboard-entry {
+  width: 100%;
   display: flex;
-  justify-content: space-between;
   padding: 8px 0;
   border-bottom: 1px solid #cecece;
+}
+
+.leaderboard-username {
+  flex: 1;
+  font-weight: bold;
+  color: #cecece;
+}
+
+.leaderboard-entry::before {
+  counter-increment: section;
+  content: counter(section) ". ";
 }
 
 .leaderboard-name {
