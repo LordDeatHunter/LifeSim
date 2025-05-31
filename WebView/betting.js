@@ -36,11 +36,14 @@ const createLeaderboardEntry = (username, score, betCount = undefined) => {
 
   const scoreSpan = document.createElement("span");
   scoreSpan.classList.add("leaderboard-score");
+
+  const formattedScore = score.toLocaleString();
+
   if (betCount !== undefined) {
     scoreSpan.classList.add("leaderboard-bet-count");
-    scoreSpan.textContent = `🪙${score} (in ${betCount} bets)`;
+    scoreSpan.textContent = `🪙${formattedScore} (in ${betCount} bets)`;
   } else {
-    scoreSpan.textContent = `🪙${score}`;
+    scoreSpan.textContent = `🪙${formattedScore}`;
   }
 
   entry.appendChild(usernameSpan);
@@ -119,7 +122,7 @@ const getBalance = async () =>
 const setBalanceDisplay = (balance) => {
   maxBalance = balance;
   if (balanceDisplay) {
-    balanceDisplay.textContent = `🪙${maxBalance}`;
+    balanceDisplay.textContent = `🪙${maxBalance.toLocaleString()}`;
   } else {
     console.error("Balance display element not found.");
   }
