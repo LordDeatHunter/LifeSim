@@ -15,7 +15,7 @@ public class BroadcastLoop(SocketLogic socketLogic, WorldStorage world)
         var previousFoods = new Dictionary<string, FoodDto>();
         var stopwatch = Stopwatch.StartNew();
 
-        while (true)
+        while (!Program.Cts.IsCancellationRequested)
         {
             var activeClients = socketLogic.Clients.Keys.Where(c => c.State == WebSocketState.Open).ToList();
 

@@ -1,3 +1,4 @@
+using System.Runtime.Loader;
 using LifeSim.Network;
 using LifeSim.World;
 
@@ -7,6 +8,7 @@ public static class Program
 {
     public static WorldStorage World { get; } = new();
     public static int ReignitionCount { get; set; }
+    public static readonly CancellationTokenSource Cts = new();
 
     public static void Main(string[] args)
     {
@@ -19,12 +21,20 @@ public static class Program
         var app = builder.Build();
         ServerSetup.ConfigureMiddleware(app, builder);
 
-        AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
+        AssemblyLoadContext.Default.Unloading += _ =>
+        {
+            Console.WriteLine("Terminating...");
+            Cts.Cancel();
+        };
+
+        AppDomain.CurrentDomain.ProcessExit += (_, _) => Cts.Cancel();
+
+        AppDomain.CurrentDomain.UnhandledException += (_, e) =>
         {
             Console.WriteLine("Unhandled exception: " + e.ExceptionObject);
         };
 
-        TaskScheduler.UnobservedTaskException += (sender, e) =>
+        TaskScheduler.UnobservedTaskException += (_, e) =>
         {
             Console.WriteLine("Unobserved task exception: " + e.Exception);
             e.SetObserved();

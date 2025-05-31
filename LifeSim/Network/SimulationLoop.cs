@@ -12,7 +12,7 @@ public class SimulationLoop(WorldStorage world)
         var lastTicks = stopwatch.ElapsedTicks;
         var tickFrequency = (float)Stopwatch.Frequency;
 
-        while (true)
+        while (!Program.Cts.IsCancellationRequested)
         {
             var currentTicks = stopwatch.ElapsedTicks;
             var delta = (currentTicks - lastTicks) / tickFrequency;
