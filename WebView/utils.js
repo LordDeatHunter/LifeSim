@@ -18,14 +18,17 @@ const getTimeString = (milliseconds) => {
 
 const getOutlineColor = (entity, type) => {
   if (type !== "animal") return undefined;
-  switch (entity.foodType) {
-    case "HERBIVORE":
-      return "#309898";
-    case "CARNIVORE":
-      return "#cb0404";
-    default:
-      return "#ffaf2e";
-  }
+
+  if (entity.predationInclanation === undefined) return "#ffaf2e";
+
+  const inclination = Math.min(Math.max(entity.predationInclanation, 0), 1);
+  const herbivoreColor = [48 / 255, 152 / 255, 152 / 255]; // #309898
+  const carnivoreColor = [203 / 255, 4 / 255, 4 / 255]; // #cb0404
+  const color = herbivoreColor.map(
+    (c, i) => c + (carnivoreColor[i] - c) * inclination,
+  );
+
+  return `#${color.map(valueToHexSegment).join("")}`;
 };
 
 const valueToHexSegment = (color) =>

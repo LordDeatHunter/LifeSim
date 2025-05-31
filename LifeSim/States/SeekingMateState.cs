@@ -22,7 +22,7 @@ public class SeekingMateState : IAnimalState
             return;
         }
 
-        if (animal.Saturation <= Animal.HungerThreshold[animal.FoodType])
+        if (animal.Saturation <= animal.HungerThresholdValue)
         {
             animal.StateMachine.TransitionTo(new SeekingFoodState());
             return;
