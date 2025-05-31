@@ -30,7 +30,11 @@ public class Animal : Entity
     private float _age;
 
     private float _predationInclination;
-    public float PredationInclination => _predationInclination;
+    public float PredationInclination
+    {
+        get => _predationInclination;
+        set => _predationInclination = float.Clamp(value, 0F, 1F);
+    }
 
     private float _reproductionCooldown;
 
@@ -91,14 +95,9 @@ public class Animal : Entity
         Saturation -= HungerRate * deltaTime;
         ReproductionCooldown += deltaTime;
 
-        if (ShouldIncreasePredationInclination())
-        {
-            _predationInclination = MathF.Min(1F, _predationInclination + 0.01F * deltaTime);
-        }
-        else if (ShouldDecreasePredationInclination())
-        {
-            _predationInclination = MathF.Max(0F, _predationInclination - 0.01F * deltaTime);
-        }
+        var foodPreferenceOffset = CompareFoodTypes();
+
+        PredationInclination += foodPreferenceOffset * 0.1F * deltaTime;
 
         if (MarkedForDeletion) return;
 
@@ -113,22 +112,25 @@ public class Animal : Entity
         Program.World.Chunks[newChunkPosition].Animals.Add(this);
     }
 
-    private bool ShouldIncreasePredationInclination()
+    private int CompareFoodTypes()
     {
-        var animalCount = Program.World.Animals.Count;
-        var foodCount = Program.World.Foods.Count;
+        var foodCount = 0;
+        var animalCount = 0;
+        for (var dx = -1; dx <= 1; dx++)
+        for (var dy = -1; dy <= 1; dy++)
+        {
+            var chunkPos = Position.ToChunkPosition() + new Vector2(dx, dy);
+            if (!Program.World.Chunks.TryGetValue(chunkPos, out var chunk)) continue;
+            
+            foodCount += chunk.Food.Count;
+            animalCount += chunk.Animals.Count(other => other != this && !other.MarkedForDeletion && Size >= other.Size);
+        }
 
-        return animalCount > foodCount * 4 && _predationInclination < 1F;
+        if (foodCount > animalCount * 2) return -1;
+        if (animalCount > foodCount * 2) return 1;
+
+        return 0;
     }
-
-    private bool ShouldDecreasePredationInclination()
-    {
-        var animalCount = Program.World.Animals.Count;
-        var foodCount = Program.World.Foods.Count;
-
-        return foodCount > animalCount * 4 && _predationInclination < 1F;
-    }
-
 
     private Color GetOffspringColor(Animal other)
     {
@@ -176,7 +178,7 @@ public class Animal : Entity
         Entity? best = null;
         var bestScore = float.MaxValue;
 
-        var herbWeight = 1 - _predationInclination;
+        var herbWeight = 1 - PredationInclination;
         if (herbWeight > 0f)
         {
             foreach (var food in Program.World.Foods.Values.Where(f => !f.MarkedForDeletion))
@@ -188,7 +190,7 @@ public class Animal : Entity
             }
         }
 
-        var carnWeight = _predationInclination;
+        var carnWeight = PredationInclination;
         if (carnWeight > 0f)
         {
             foreach (var ani in Program.World.Animals.Values.Where(CanEatAnimal))
@@ -249,12 +251,12 @@ public class Animal : Entity
         var position = (Position + partner.Position) / 2F;
         var size = (Size + partner.Size) / 2F + RandomUtils.RNG.NextSingle() * 4F - 2F;
         var color = GetOffspringColor(partner);
-        var predationInclination = (_predationInclination + partner._predationInclination) / 2F +
+        var predationInclination = (PredationInclination + partner.PredationInclination) / 2F +
                                    (RandomUtils.RNG.NextSingle() * 0.1F - 0.05F);
 
         var child = new Animal(position, size, color)
         {
-            _predationInclination = float.Clamp(predationInclination, 0F, 1F)
+            PredationInclination = float.Clamp(predationInclination, 0F, 1F)
         };
 
         Program.World.Animals[child.Id] = child;
@@ -278,18 +280,18 @@ public class Animal : Entity
         AreDietsCompatibleForMating(animal);
 
     public bool AreDietsCompatibleForMating(Animal other) =>
-        MathF.Abs(_predationInclination - other._predationInclination) <= 0.2F;
+        MathF.Abs(PredationInclination - other.PredationInclination) <= 0.2F;
 
     public float HungerThresholdValue =>
         DefaultHerbivoreHungerThreshold +
-        _predationInclination * (DefaultCarnivoreHungerThreshold - DefaultHerbivoreHungerThreshold);
+        PredationInclination * (DefaultCarnivoreHungerThreshold - DefaultHerbivoreHungerThreshold);
 
     private float ReproductionCost =>
-        DefaultHerbivoreReproCost + _predationInclination * (DefaultCarnivoreReproCost - DefaultHerbivoreReproCost);
+        DefaultHerbivoreReproCost + PredationInclination * (DefaultCarnivoreReproCost - DefaultHerbivoreReproCost);
 
     private float ReproductionCooldownThreshold =>
         DefaultHerbivoreReproCooldown +
-        _predationInclination * (DefaultCarnivoreReproCooldown - DefaultHerbivoreReproCooldown);
+        PredationInclination * (DefaultCarnivoreReproCooldown - DefaultHerbivoreReproCooldown);
 
     private void HandleCollision()
     {
@@ -339,5 +341,5 @@ public class Animal : Entity
     }
 
     public override IEntityDto ToDTO() =>
-        new AnimalDto(Id.ToString(), Position.X, Position.Y, Color.ToHex(), Size, _predationInclination);
+        new AnimalDto(Id.ToString(), Position.X, Position.Y, Color.ToHex(), Size, PredationInclination);
 }
