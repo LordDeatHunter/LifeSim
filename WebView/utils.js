@@ -1,5 +1,5 @@
 const toPaddedNumber = (num, padStart = 2, padEnd = 0) =>
-  toPaddedString(Math.floor(num).toString());
+  toPaddedString(Math.floor(num).toString(), padStart, padEnd);
 
 const toPaddedString = (numericString, padStart = 2, padEnd = 0) =>
   numericString.padStart(padStart, "0").padEnd(padEnd, "0");
