@@ -18,7 +18,7 @@ public class SimulationLoop(WorldStorage world)
             var delta = (currentTicks - lastTicks) / tickFrequency;
             lastTicks = currentTicks;
 
-            foreach (var entity in world.AllEntities.Values)
+            foreach (var entity in world.AllEntities)
             {
                 entity.Update(delta);
             }
