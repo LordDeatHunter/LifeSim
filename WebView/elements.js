@@ -1,5 +1,5 @@
 const reigniteLife = () => {
-  fetch("http://localhost:5000/api/reignite_life");
+  fetch(`${API_ENDPOINT}/reignite-life`, { method: "POST" });
 };
 
 let canvas;

@@ -17,9 +17,12 @@ public static class Program
 
         var builder = WebApplication.CreateBuilder(args);
         ServerSetup.ConfigureServices(builder);
+        builder.Services.AddControllers();
+        builder.Services.AddSingleton(api);
 
         var app = builder.Build();
         ServerSetup.ConfigureMiddleware(app, builder);
+        app.MapControllers();
 
         Console.CancelKeyPress += (_, e) =>
         {
@@ -47,13 +50,6 @@ public static class Program
             e.SetObserved();
         };
 
-        app.Map("/api/reignite_life", api.ReigniteLifeHandler);
-        app.Map("/api/balance", api.GetBalance);
-        app.Map("/api/place-bet", api.PlaceBet);
-        app.Map("/api/bets", api.GetBets);
-        app.Map("/api/bet/{id:guid}", api.GetBetById);
-        app.Map("/api/leaderboards", api.GetLeaderboards);
-        app.Map("/api/set-name", api.SetName);
         app.Map("/ws", socketLogic.HandleWebSocket);
 
         SimulationLoop simulationLoop = new(World);

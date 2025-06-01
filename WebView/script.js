@@ -1,5 +1,6 @@
 let socket;
 const webURL = "ws://localhost:5000/ws";
+const API_ENDPOINT = "http://localhost:5000/api";
 
 const lerpDuration = 300;
 const lerp = (a, b, t) => a + (b - a) * t;
