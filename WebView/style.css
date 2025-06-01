@@ -57,6 +57,11 @@ body {
   border: 1px solid #cecece;
   display: block;
   margin-inline: auto;
+  cursor: grab;
+}
+
+#view:active {
+  cursor: grabbing;
 }
 
 #right-info {
