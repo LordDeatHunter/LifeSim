@@ -24,7 +24,7 @@ public static class IdUtils
             // Try a bigger array (make maxId bigger) and refactor some logic because the counter is unsigned
             while (UsedIds[_counter]) _counter++;
             id = _counter;
-            UsedIds[_counter] = true;
+            UsedIds[_counter++] = true;
         }
 
         return id;
@@ -32,6 +32,6 @@ public static class IdUtils
 
     public static void FreeId(ushort id)
     {
-        UsedIds[id] = false;
+        lock(IdsLock) UsedIds[id] = false;
     }
 }
