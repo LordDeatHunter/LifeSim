@@ -14,7 +14,7 @@ public class WorldStorage
     public ConcurrentDictionary<Vector2, Chunk> Chunks { get; } = new();
 
     // helper for merging foods and animals
-    public ConcurrentBag<Entity> AllEntities => new(Foods.Values.Cast<Entity>().Concat(Animals.Values.Cast<Entity>()));
+    public ConcurrentBag<Entity> AllEntities => [.. Foods.Values, .. Animals.Values];
 
     public ConcurrentDictionary<string, AnimalDto> GetAnimalDtos() => new(Animals.Values.ToList().Select(a => (AnimalDto)a.ToDTO()).ToDictionary(a => a.id, a => a));
     public ConcurrentDictionary<string, FoodDto> GetFoodDtos() => new(Foods.Values.ToList().Select(f => (FoodDto)f.ToDTO()).ToDictionary(f => f.id, f => f));
