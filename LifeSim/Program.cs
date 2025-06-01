@@ -21,6 +21,13 @@ public static class Program
         var app = builder.Build();
         ServerSetup.ConfigureMiddleware(app, builder);
 
+        Console.CancelKeyPress += (_, e) =>
+        {
+            Console.WriteLine("Terminating...");
+            Cts.Cancel();
+            e.Cancel = true;
+        };
+
         AssemblyLoadContext.Default.Unloading += _ =>
         {
             Console.WriteLine("Terminating...");
