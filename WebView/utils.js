@@ -1,3 +1,7 @@
+const lerp = (a, b, t) => a + (b - a) * t;
+
+const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+
 const toPaddedNumber = (num, padStart = 2, padEnd = 0) =>
   toPaddedString(Math.floor(num).toString(), padStart, padEnd);
 

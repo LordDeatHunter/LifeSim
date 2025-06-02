@@ -3,7 +3,6 @@ const webURL = "ws://localhost:5000/ws";
 const API_ENDPOINT = "http://localhost:5000/api";
 
 const lerpDuration = 300;
-const lerp = (a, b, t) => a + (b - a) * t;
 
 let prevEntities;
 let entities;
@@ -11,8 +10,6 @@ let lastUpdate;
 
 let recentlySpawned;
 let recentlyDespawned;
-
-const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
 const resetState = () => {
   prevEntities = {};
@@ -143,7 +140,7 @@ const render = () => {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   ctx.save();
-  ctx.translate(camX, camY);
+  ctx.setTransform(camScale, 0, 0, camScale, camX, camY);
 
   const t = Math.min((now - lastUpdate) / lerpDuration, 1);
 
@@ -197,6 +194,8 @@ const render = () => {
       renderEntity({ x, y }, size, outline ?? color, outline);
     }
   }
+
+  ctx.restore();
 
   requestAnimationFrame(render);
 };
