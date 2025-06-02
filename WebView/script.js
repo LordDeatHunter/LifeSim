@@ -3,7 +3,6 @@ const webURL = "ws://localhost:5000/ws";
 const API_ENDPOINT = "http://localhost:5000/api";
 
 const lerpDuration = 300;
-const lerp = (a, b, t) => a + (b - a) * t;
 
 let prevEntities;
 let entities;
@@ -137,7 +136,11 @@ const renderEntity = (position, diameter, color, outline) => {
 
 const render = () => {
   const now = performance.now();
+  ctx.restore();
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  ctx.save();
+  ctx.setTransform(camScale, 0, 0, camScale, camX, camY);
 
   const t = Math.min((now - lastUpdate) / lerpDuration, 1);
 
@@ -191,6 +194,8 @@ const render = () => {
       renderEntity({ x, y }, size, outline ?? color, outline);
     }
   }
+
+  ctx.restore();
 
   requestAnimationFrame(render);
 };

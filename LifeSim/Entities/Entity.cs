@@ -13,7 +13,7 @@ public abstract class Entity(Vector2 position, Color color, float size = 8F)
     public Vector2 Position
     {
         get => _position;
-        set => _position = value.Clamp(new Vector2(0, 0), new Vector2(1024, 1024));
+        set => _position = value.Clamp(new Vector2(0, 0), new Vector2(2048, 2048));
     }
 
     public Color Color { get; set; } = color;

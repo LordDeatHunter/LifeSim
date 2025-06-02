@@ -23,10 +23,10 @@ public class SimulationLoop(WorldStorage world)
                 entity.Update(delta);
             }
 
-            if (world.Foods.Count < 1000)
+            if (world.Foods.Count < 4000)
             {
                 var foodAmount = RandomUtils.RNG.Next(0, 6);
-                world.SpawnFood(foodAmount, 0, 1024);
+                world.SpawnFood(foodAmount, 0, 2048);
             }
 
             await Task.Delay(16);
