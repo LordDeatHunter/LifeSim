@@ -22,8 +22,8 @@ public class Animal : Entity
     private const float DefaultHerbivoreReproCost = 3F;
     private const float DefaultCarnivoreReproCost = 4F;
 
-    private float Speed { get; set; }
-    private readonly float _maxSaturation = DefaultMaxSat;
+    public float Speed { get; private set; }
+    private const float _maxSaturation = DefaultMaxSat;
     private float _currentSaturation = DefaultMaxSat / 2;
 
     private readonly float _lifespan = 24F;
@@ -54,13 +54,13 @@ public class Animal : Entity
         }
     }
 
-    public Entity? Target { get; set; }
+    public Entity? TargetEntity { get; set; }
     public AnimalStateMachine StateMachine { get; }
 
     public float EatRangeSquared =>
-        MathF.Pow((Size + (Target?.Size ?? 0F)) / 2F, 2F);
+        MathF.Pow((Size + (TargetEntity?.Size ?? 0F)) / 2F, 2F);
 
-    public float MatingRange => Target == null ? 0 : (Size + Target.Size + MatePadding) / 2F;
+    public float MatingRange => TargetEntity == null ? 0 : (Size + TargetEntity.Size + MatePadding) / 2F;
 
     public float HungerRate { get; }
 
@@ -205,6 +205,39 @@ public class Animal : Entity
         return best;
     }
 
+    public Animal? FindNearestPredator(float threatRadius = 60f)
+    {
+        Animal? nearest = null;
+        var bestDistSq = threatRadius * threatRadius;
+
+        for (var dx = -1; dx <= 1; dx++)
+        for (var dy = -1; dy <= 1; dy++)
+        {
+            var chunkPos = Position.ToChunkPosition() + new Vector2(dx, dy);
+            if (!Program.World.Chunks.TryGetValue(chunkPos, out var chunk)) continue;
+
+            foreach (var other in chunk.Animals)
+            {
+                if (other == this || other.MarkedForDeletion) continue;
+                if (!other.CanEatAnimal(this)) continue;
+                if (!IsAnimalInDangerDistance(other, threatRadius)) continue;
+
+                var d2 = Vector2.DistanceSquared(Position, other.Position);
+                if (d2 >= bestDistSq) continue;
+                bestDistSq = d2;
+                nearest = other;
+            }
+        }
+
+        return nearest;
+    }
+
+    public bool IsAnimalInDangerDistance(Animal other, float safeDistance = 32f)
+    {
+        if (other == this || other.MarkedForDeletion) return false;
+        return Vector2.DistanceSquared(Position, other.Position) <= safeDistance * safeDistance;
+    }
+
     public float FoodValue(Entity entity) =>
         Vector2.Distance(entity.Position, Position) / Speed + entity.Size / 2F / Saturation;
 
@@ -242,8 +275,8 @@ public class Animal : Entity
             CreateOffspring(partner);
         }
 
-        if (partner.Target == this) partner.Target = null;
-        Target = null;
+        if (partner.TargetEntity == this) partner.TargetEntity = null;
+        TargetEntity = null;
     }
 
     private void CreateOffspring(Animal partner)
@@ -304,7 +337,7 @@ public class Animal : Entity
 
             foreach (var animal in chunk.Animals.Where(animal => animal != this && IsColliding(animal)))
             {
-                if (Target == animal && CanEatAnimal(animal))
+                if (TargetEntity == animal && CanEatAnimal(animal))
                 {
                     Consume(animal);
                     continue;
@@ -337,7 +370,7 @@ public class Animal : Entity
     {
         Saturation += entity.Size / 2F;
         entity.MarkForDeletion();
-        if (Target == entity) Target = null;
+        if (TargetEntity == entity) TargetEntity = null;
     }
 
     public override IEntityDto ToDTO() =>

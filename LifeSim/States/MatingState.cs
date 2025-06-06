@@ -8,7 +8,7 @@ public class MatingState : IAnimalState
 
     public void Enter(Animal animal)
     {
-        if (animal.Target is not Animal mate) return;
+        if (animal.TargetEntity is not Animal mate) return;
         animal.HandleReproductionTarget(mate);
     }
 

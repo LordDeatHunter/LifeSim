@@ -8,15 +8,22 @@ public class SeekingMateState : IAnimalState
 
     public void Enter(Animal animal)
     {
-        animal.Target = animal.FindNearestMate();
-        if (animal.Target is not Animal mate) return;
-        if (mate.StateMachine.Current == AnimalState.SeekingMate && mate.Target == animal) return;
+        animal.TargetEntity = animal.FindNearestMate();
+        if (animal.TargetEntity is not Animal mate) return;
+        if (mate.StateMachine.Current == AnimalState.SeekingMate && mate.TargetEntity == animal) return;
         mate.StateMachine.SetMatingTarget(animal);
     }
 
     public void Update(Animal animal, float deltaTime)
     {
-        if (animal.Target is not Animal mate)
+        var predator = animal.FindNearestPredator();
+        if (predator != null)
+        {
+            animal.StateMachine.TransitionTo(new FleeingState(predator));
+            return;
+        }
+
+        if (animal.TargetEntity is not Animal mate)
         {
             animal.StateMachine.TransitionTo(new IdleState());
             return;

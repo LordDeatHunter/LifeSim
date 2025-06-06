@@ -8,11 +8,18 @@ public class IdleState : IAnimalState
 
     public void Enter(Animal animal)
     {
-        animal.Target = null;
+        animal.TargetEntity = null;
     }
 
     public void Update(Animal animal, float deltaTime)
     {
+        var predator = animal.FindNearestPredator();
+        if (predator != null)
+        {
+            animal.StateMachine.TransitionTo(new FleeingState(predator));
+            return;
+        }
+        
         if (animal.CanReproduce())
         {
             animal.StateMachine.TransitionTo(new SeekingMateState());
@@ -22,7 +29,7 @@ public class IdleState : IAnimalState
             animal.StateMachine.TransitionTo(new SeekingFoodState());
         }
     }
-
+ 
     public void Exit(Animal animal)
     {
     }

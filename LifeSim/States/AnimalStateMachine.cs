@@ -30,6 +30,6 @@ public class AnimalStateMachine
     public void SetMatingTarget(Animal target)
     {
         TransitionTo(new SeekingMateState());
-        _animal.Target = target;
+        _animal.TargetEntity = target;
     }
 }

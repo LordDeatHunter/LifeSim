@@ -7,8 +7,8 @@ public class EatingState : IAnimalState
     public AnimalState State => AnimalState.Eating;
     public void Enter(Animal animal)
     {
-        if (animal.Target == null) return;
-        animal.Consume(animal.Target);
+        if (animal.TargetEntity == null) return;
+        animal.Consume(animal.TargetEntity);
     }
     public void Update(Animal animal, float deltaTime)
     {
