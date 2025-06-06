@@ -29,6 +29,9 @@ const resetState = () => {
   };
 };
 
+const foodImg = new Image();
+foodImg.src = "food.png";
+
 const applyDiff = (cache, diffs, type) => {
   const { added = {}, updated = {}, removed = [] } = diffs;
 
@@ -134,6 +137,20 @@ const renderEntity = (position, diameter, color, outline) => {
   ctx.stroke();
 };
 
+const renderFood = (position, diameter, opacity) => {
+  if (!foodImg.complete) return;
+
+  ctx.globalAlpha = opacity ?? 1;
+  ctx.drawImage(
+    foodImg,
+    position.x - diameter / 2,
+    position.y - diameter / 2,
+    diameter,
+    diameter,
+  );
+  ctx.globalAlpha = 1;
+};
+
 const render = () => {
   const now = performance.now();
   ctx.restore();
@@ -144,7 +161,7 @@ const render = () => {
 
   const t = Math.min((now - lastUpdate) / lerpDuration, 1);
 
-  for (const type of ["animal", "food"]) {
+  for (const type of ["food", "animal"]) {
     for (const id in entities[type]) {
       const curr = entities[type][id];
       const prev = id in prevEntities[type] ? prevEntities[type][id] : curr;
@@ -169,11 +186,15 @@ const render = () => {
         outline = appendAlpha(getOutlineColor(curr, type), opacity);
       }
 
-      renderEntity({ x, y }, size, outline ?? color, outline);
+      if (type === "food") {
+        renderFood({ x, y }, size, opacity);
+      } else {
+        renderEntity({ x, y }, size, outline ?? color, outline);
+      }
     }
   }
 
-  for (const type of ["animal", "food"]) {
+  for (const type of ["food", "animal"]) {
     for (const id in recentlyDespawned[type]) {
       const { entity, opacity } = recentlyDespawned[type][id];
 
@@ -191,7 +212,11 @@ const render = () => {
       if (type === "animal") {
         outline = appendAlpha(getOutlineColor(entity, type), opacity);
       }
-      renderEntity({ x, y }, size, outline ?? color, outline);
+      if (type === "food") {
+        renderFood({ x, y }, size, opacity);
+      } else {
+        renderEntity({ x, y }, size, outline ?? color, outline);
+      }
     }
   }
 

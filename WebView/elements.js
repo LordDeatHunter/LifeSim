@@ -14,6 +14,7 @@ let reignitionCounter;
 document.addEventListener("DOMContentLoaded", () => {
   canvas = document.getElementById("view");
   ctx = canvas.getContext("2d");
+  ctx.imageSmoothingEnabled = false;
   viewerCountHeader = document.getElementById("viewer-count-text");
   elapsedTimeHeader = document.getElementById("elapsed-time-display");
   animalFoodTypeDisplays = document.querySelectorAll(".animal-type-display");
