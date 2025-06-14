@@ -32,7 +32,9 @@ public class LifeSimController(LifeSimApi api) : ControllerBase
         if (string.IsNullOrEmpty(clientId))
             return BadRequest(new { message = ClientIdMissingMessage });
 
-        return Ok(new { balance = api.GetOrCreateBalance(clientId, 100) });
+        var balance = api.GetOrCreateBalanceAsync(clientId, 100).Result;
+
+        return Ok(new { balance = balance.Amount });
     }
 
     [HttpPost("place-bet")]
@@ -43,22 +45,23 @@ public class LifeSimController(LifeSimApi api) : ControllerBase
             return BadRequest(new { message = ClientIdMissingMessage });
 
         var amount = betRequest.Amount;
-
-        if (!api.Balances.TryGetValue(clientId, out var balance) || amount > balance)
-            return BadRequest(new { message = "Insufficient balance" });
+        var balance = api.GetOrCreateBalanceAsync(clientId, 100).Result;
 
         if (amount < 1)
             return BadRequest(new { message = "Bet amount must be greater than zero" });
+
+        if (amount > balance.Amount)
+            return BadRequest(new { message = "Insufficient balance" });
 
         var betType = betRequest.BetType.ToLowerInvariant();
         if (betType != "increase" && betType != "decrease")
             return BadRequest(new { message = "Invalid bet type. Use 'increase' or 'decrease'" });
 
-        var bet = api.PlaceBet(clientId, amount, betType);
+        var bet = api.PlaceBetAsync(clientId, amount, betType).Result;
 
         return Ok(new
         {
-            balance = api.Balances[clientId],
+            balance = balance.Amount,
             bet = new
             {
                 id = bet.Id,
@@ -66,7 +69,7 @@ public class LifeSimController(LifeSimApi api) : ControllerBase
                 betType = bet.BetType,
                 initialCount = bet.InitialCount,
                 expiresAt = bet.ExpiresAt,
-                status = bet.Status.ToString()
+                status = bet.Status
             }
         });
     }
@@ -78,7 +81,7 @@ public class LifeSimController(LifeSimApi api) : ControllerBase
         if (string.IsNullOrEmpty(clientId))
             return BadRequest(new { message = ClientIdMissingMessage });
 
-        var bets = api.GetBets(clientId);
+        var bets = api.GetBetsAsync(clientId).Result;
         return Ok(bets);
     }
 
@@ -92,13 +95,13 @@ public class LifeSimController(LifeSimApi api) : ControllerBase
         if (!api.GetOrCreateBetsForUser(clientId).TryGetValue(id, out var bet))
             return NotFound(new { message = "Bet not found" });
 
-        return Ok(new BetDto(bet));
+        return Ok(bet);
     }
 
     [HttpGet("leaderboards")]
     public IActionResult GetLeaderboards()
     {
-        return Ok(api.GetLeaderboards());
+        return Ok(api.GetLeaderboardsAsync().Result);
     }
 
     [HttpPost("set-name")]

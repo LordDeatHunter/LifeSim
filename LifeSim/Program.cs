@@ -13,12 +13,7 @@ public static class Program
     public static void Main(string[] args)
     {
         SocketLogic socketLogic = new();
-        LifeSimApi api = new();
-
-        var builder = WebApplication.CreateBuilder(args);
-        ServerSetup.ConfigureServices(builder);
-        builder.Services.AddControllers();
-        builder.Services.AddSingleton(api);
+        var builder = ServerSetup.ConfigureServices(args);
 
         var app = builder.Build();
         ServerSetup.ConfigureMiddleware(app, builder);

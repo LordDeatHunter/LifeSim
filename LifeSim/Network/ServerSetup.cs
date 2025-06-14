@@ -1,11 +1,15 @@
-﻿using Microsoft.AspNetCore.DataProtection;
+﻿using LifeSim.Data;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.EntityFrameworkCore;
 
 namespace LifeSim.Network;
 
 public static class ServerSetup
 {
-    public static void ConfigureServices(WebApplicationBuilder builder)
+    public static WebApplicationBuilder ConfigureServices(string[] args)
     {
+        var builder = WebApplication.CreateBuilder(args);
+        builder.Services.AddControllers();
         builder.Services.AddDataProtection().SetApplicationName("LifeSim");
         builder.Services.AddDistributedMemoryCache();
         builder.Services.AddSession(options =>
@@ -15,6 +19,12 @@ public static class ServerSetup
             options.IdleTimeout = TimeSpan.FromDays(365);
             options.Cookie.IsEssential = true;
         });
+        builder.Services.AddScoped<LifeSimApi>();
+        builder.Services.AddDbContext<ApplicationDbContext>(options =>
+            options.UseSqlite("Data Source=lifesim.db")
+        );
+
+        return builder;
     }
 
     public static void ConfigureMiddleware(WebApplication app, WebApplicationBuilder builder)
