@@ -77,7 +77,6 @@ public class Animal : Entity
 
     public Animal(Vector2 position, float size, Color color) : base(position, color, size)
     {
-        Program.World.Chunks[position.ToChunkPosition()].Animals.Add(this);
         Lifespan = 24F + RandomUtils.RNG.NextSingle() * 16F + Size / 4F;
 
         HungerRate = DefaultHungerRate * MathF.Sqrt(Size);
@@ -250,7 +249,7 @@ public class Animal : Entity
     public override void MarkForDeletion()
     {
         base.MarkForDeletion();
-        Program.World.DeleteAnimal(this);
+        Program.World.EnqueueAnimalDeletion(this);
     }
 
     public bool IsColliding(Entity other) => Vector2.Distance(Position, other.Position) <= (Size + other.Size) / 2F;
@@ -292,7 +291,7 @@ public class Animal : Entity
             PredationInclination = float.Clamp(predationInclination, 0F, 1F)
         };
 
-        Program.World.SaveAnimal(child);
+        Program.World.EnqueueAnimalAddition(child);
     }
 
     public bool CanMateWith(Animal animal) =>

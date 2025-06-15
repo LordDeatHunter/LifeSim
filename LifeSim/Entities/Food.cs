@@ -21,7 +21,6 @@ public class Food : Entity
 
     public Food(Vector2 position) : base(position, Color.FromArgb(0x485D3C), RandomUtils.RNG.NextSingle() * 14F + 2F)
     {
-        Program.World.Chunks[position.ToChunkPosition()].Food.Add(this);
         Lifespan = 24F + RandomUtils.RNG.NextSingle() * 24F + Size;
     }
 
@@ -33,7 +32,7 @@ public class Food : Entity
     public override void MarkForDeletion()
     {
         base.MarkForDeletion();
-        Program.World.DeleteFood(this);
+        Program.World.EnqueueFoodDeletion(this);
     }
 
     public override IEntityDto ToDTO() => new FoodDto(Id.ToString(), Position.X, Position.Y, Color.ToHex(), Size);

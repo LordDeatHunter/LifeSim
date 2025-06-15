@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Numerics;
+using EFCore.BulkExtensions;
 using LifeSim.Data;
 using LifeSim.Data.Models;
 using LifeSim.Entities;
@@ -11,8 +12,13 @@ namespace LifeSim.World;
 public class WorldStorage
 {
     private readonly IServiceScopeFactory _scopeFactory;
-    public ConcurrentDictionary<ushort, Food> Foods { get; } = new();
-    public ConcurrentDictionary<ushort, Animal> Animals { get; } = new();
+    private readonly ConcurrentBag<int> _deletedFoods = [];
+    private readonly ConcurrentBag<int> _deletedAnimals = [];
+    private readonly ConcurrentBag<FoodEntity> _addedFoods = [];
+    private readonly ConcurrentBag<AnimalEntity> _addedAnimals = [];
+
+    public ConcurrentDictionary<int, Food> Foods { get; } = new();
+    public ConcurrentDictionary<int, Animal> Animals { get; } = new();
 
     public ConcurrentDictionary<Vector2, Chunk> Chunks { get; } = new();
 
@@ -44,7 +50,7 @@ public class WorldStorage
             var y = RandomUtils.RNG.Next((int)startPosition.Y, (int)endPosition.Y);
 
             var food = new Food(new Vector2(x, y));
-            SaveFood(food);
+            Program.World.EnqueueFoodAddition(food);
         }
     }
 
@@ -56,119 +62,66 @@ public class WorldStorage
             var y = RandomUtils.RNG.Next((int)startPosition.Y, (int)endPosition.Y);
 
             var animal = new Animal(new Vector2(x, y));
-            SaveAnimal(animal);
+            Program.World.EnqueueAnimalAddition(animal);
         }
     }
 
-    public void SaveAnimal(Animal animal)
-    {
-        Animals[animal.Id] = animal;
-
-        using var scope = _scopeFactory.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        db.Animals.Add(AnimalEntity.ToDomain(animal));
-
-        try
-        {
-            db.SaveChanges();
-        }
-        catch (DbUpdateException ex)
-        {
-            Console.WriteLine(ex.StackTrace);
-        }
-    }
-
-    public void SaveFood(Food food)
-    {
-        Foods[food.Id] = food;
-
-        using var scope = _scopeFactory.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        db.Foods.Add(FoodEntity.ToDomain(food));
-
-        try
-        {
-            db.SaveChanges();
-        }
-        catch (DbUpdateException ex)
-        {
-            Console.WriteLine(ex.StackTrace);
-        }
-    }
-
-    public void DeleteAnimal(Animal animal)
-    {
-        Chunks[animal.Position.ToChunkPosition()].Animals.Remove(animal);
-        var deleted = Animals.TryRemove(animal.Id, out _);
-        if (!deleted) return;
-
-        using var scope = _scopeFactory.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        db.Animals.Remove(new AnimalEntity { Id = animal.Id });
-        try
-        {
-            db.SaveChanges();
-        }
-        catch (DbUpdateException ex)
-        {
-            Console.WriteLine(ex.StackTrace);
-        }
-    }
-
-    public void DeleteFood(Food food)
+    public void EnqueueFoodDeletion(Food food)
     {
         Chunks[food.Position.ToChunkPosition()].Food.Remove(food);
         var deleted = Foods.TryRemove(food.Id, out _);
         if (!deleted) return;
-
-        using var scope = _scopeFactory.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        db.Foods.Remove(new FoodEntity { Id = food.Id });
-        try
-        {
-            db.SaveChanges();
-        }
-        catch (DbUpdateException ex)
-        {
-            Console.WriteLine(ex.StackTrace);
-        }
+        _deletedFoods.Add(food.Id);
     }
 
-    public void SpawnFood(int amount, float x, float y) => SpawnFood(amount, Vector2.One * x, Vector2.One * y);
-    public void SpawnAnimals(int amount, float x, float y) => SpawnAnimals(amount, Vector2.One * x, Vector2.One * y);
-
-    public async Task LoadWorldAsync(IServiceProvider services)
+    public void EnqueueAnimalDeletion(Animal animal)
     {
-        using var scope = services.CreateScope();
+        Chunks[animal.Position.ToChunkPosition()].Animals.Remove(animal);
+        var deleted = Animals.TryRemove(animal.Id, out _);
+        if (!deleted) return;
+        _deletedAnimals.Add(animal.Id);
+    }
+    
+    public void EnqueueFoodAddition(Food food)
+    {
+        Foods[food.Id] = food;
+        Chunks[food.Position.ToChunkPosition()].Food.Add(food);
+        _addedFoods.Add(FoodEntity.ToDomain(food));
+    }
+    
+    public void EnqueueAnimalAddition(Animal animal)
+    {
+        Animals[animal.Id] = animal;
+        Chunks[animal.Position.ToChunkPosition()].Animals.Add(animal);
+        _addedAnimals.Add(AnimalEntity.ToDomain(animal));
+    }
+
+    public async Task UpdateDbEntitiesAsync()
+    {
+        using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
         db.ChangeTracker.AutoDetectChangesEnabled = false;
         await using var tx = await db.Database.BeginTransactionAsync();
 
-        var foods = await db.Foods.ToListAsync();
-        var animals = await db.Animals.ToListAsync();
-
-        db.Foods.RemoveRange(foods);
-        db.Animals.RemoveRange(animals);
-
-        await db.SaveChangesAsync();
+        var foodIds = _deletedFoods.ToList();
+        if (foodIds.Count > 0)
+        {
+            await db.Foods
+                .Where(f => foodIds.Contains((byte)f.Id))
+                .ExecuteDeleteAsync();
+        }
         
-        var foodEntities   = new List<FoodEntity>();
-        var animalEntities = new List<AnimalEntity>();
-
-        foreach (var newFood in foods.Select(FoodEntity.FromDomain))
+        var animalIds = _deletedAnimals.ToList();
+        if (animalIds.Count > 0)
         {
-            foodEntities.Add(FoodEntity.ToDomain(newFood));
-            Foods[newFood.Id] = newFood;
+            await db.Animals
+                .Where(a => animalIds.Contains((byte)a.Id))
+                .ExecuteDeleteAsync();
         }
 
-        foreach (var newAnimal in animals.Select(AnimalEntity.FromDomain))
-        {
-            animalEntities.Add(AnimalEntity.ToDomain(newAnimal));
-            Animals[newAnimal.Id] = newAnimal;
-        }
-
-        db.Foods.AddRange(foodEntities);
-        db.Animals.AddRange(animalEntities);
+        if (!_addedFoods.IsEmpty) await db.BulkInsertAsync(_addedFoods);
+        if (!_addedAnimals.IsEmpty) await db.BulkInsertAsync(_addedAnimals);
 
         try
         {
@@ -179,7 +132,31 @@ public class WorldStorage
         {
             Console.WriteLine(ex.StackTrace);
         }
-
         db.ChangeTracker.AutoDetectChangesEnabled = true;
+        
+        _deletedFoods.Clear();
+        _deletedAnimals.Clear();
+        _addedFoods.Clear();
+        _addedAnimals.Clear();
+    }
+
+    public void SpawnFood(int amount, float x, float y) => SpawnFood(amount, Vector2.One * x, Vector2.One * y);
+    public void SpawnAnimals(int amount, float x, float y) => SpawnAnimals(amount, Vector2.One * x, Vector2.One * y);
+
+    public async Task LoadWorldAsync(IServiceProvider services)
+    {
+        using var scope = services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        var foods = await db.Foods.ToListAsync();
+        var animals = await db.Animals.ToListAsync();
+
+        db.Foods.RemoveRange(foods);
+        db.Animals.RemoveRange(animals);
+
+        await db.SaveChangesAsync();
+        
+        foods.Select(FoodEntity.FromDomain).ToList().ForEach(EnqueueFoodAddition);
+        animals.Select(AnimalEntity.FromDomain).ToList().ForEach(EnqueueAnimalAddition);
     }
 }

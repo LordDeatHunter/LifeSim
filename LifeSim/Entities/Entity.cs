@@ -7,7 +7,7 @@ namespace LifeSim.Entities;
 
 public abstract class Entity(Vector2 position, Color color, float size = 8F)
 {
-    public ushort Id { get; } = IdUtils.GenerateId();
+    public int Id { get; } = IdUtils.GenerateId();
     private Vector2 _position = position;
 
     public Vector2 Position
