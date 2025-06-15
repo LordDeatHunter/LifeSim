@@ -2,14 +2,15 @@ namespace LifeSim.Utils;
 
 public static class IdUtils
 {
-    private const int MaxId = ushort.MaxValue + 1;
+    // ID shifted from 1 to 65_534 (0 is reserved for no entity)
+    private const int MaxId = ushort.MaxValue;
     private static readonly bool[] UsedIds = new bool[MaxId];
     private static readonly Lock IdsLock = new();
     private static ushort _counter;
 
     static IdUtils()
     {
-        for (var i = 0; i < MaxId; i++)
+        for (var i = 0; i < MaxId - 1; i++)
         {
             UsedIds[i] = false;
         }
@@ -27,11 +28,11 @@ public static class IdUtils
             UsedIds[_counter++] = true;
         }
 
-        return id;
+        return (ushort)(id + 1);
     }
 
     public static void FreeId(ushort id)
     {
-        lock(IdsLock) UsedIds[id] = false;
+        lock (IdsLock) UsedIds[id - 1] = false;
     }
 }

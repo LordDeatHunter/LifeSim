@@ -9,6 +9,9 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> opts) :
     public DbSet<User> Users { get; set; }
     public DbSet<Bet> Bets { get; set; }
 
+    public DbSet<FoodEntity> Foods { get; set; }
+    public DbSet<AnimalEntity> Animals { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

@@ -1,4 +1,5 @@
 ﻿using LifeSim.Data;
+using LifeSim.World;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,6 +24,7 @@ public static class ServerSetup
         builder.Services.AddDbContext<ApplicationDbContext>(options =>
             options.UseSqlite("Data Source=lifesim.db")
         );
+        builder.Services.AddSingleton<WorldStorage>();
 
         return builder;
     }
