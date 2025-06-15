@@ -1,10 +1,23 @@
 ﻿using System.Drawing;
+using System.Globalization;
 
 namespace LifeSim.Utils;
 
 public static class ColorUtils
 {
     public static string ToHex(this Color color) => $"#{color.R:X2}{color.G:X2}{color.B:X2}";
+    
+    public static Color FromHex(string hex)
+    {
+        if (string.IsNullOrEmpty(hex) || hex is not ['#', _, _, _, _, _, _])
+            throw new ArgumentException("Invalid hex color format. Expected format: #RRGGBB");
+
+        var r = int.Parse(hex.Substring(1, 2), NumberStyles.HexNumber);
+        var g = int.Parse(hex.Substring(3, 2), NumberStyles.HexNumber);
+        var b = int.Parse(hex.Substring(5, 2), NumberStyles.HexNumber);
+
+        return Color.FromArgb(r, g, b);
+    }
 
     public static Color ColorFromHsla(float h, float s, float l, float a)
     {

@@ -7,21 +7,21 @@ namespace LifeSim.Entities;
 
 public class Food : Entity
 {
-    private float _age = 0F;
-    private float _lifespan;
+    private float _age;
+    public float Lifespan { get; set; }
+
     public float Age {
         get => _age;
         set
         {
             _age = value;
-            if (_age >= _lifespan) MarkForDeletion();
+            if (_age >= Lifespan) MarkForDeletion();
         }
     }
 
     public Food(Vector2 position) : base(position, Color.FromArgb(0x485D3C), RandomUtils.RNG.NextSingle() * 14F + 2F)
     {
-        Program.World.Chunks[position.ToChunkPosition()].Food.Add(this);
-        _lifespan = 24F + RandomUtils.RNG.NextSingle() * 24F + Size;
+        Lifespan = 24F + RandomUtils.RNG.NextSingle() * 24F + Size;
     }
 
     public override void Update(float deltaTime)
@@ -32,8 +32,7 @@ public class Food : Entity
     public override void MarkForDeletion()
     {
         base.MarkForDeletion();
-        Program.World.Chunks[Position.ToChunkPosition()].Food.Remove(this);
-        Program.World.Foods.TryRemove(Id, out _);
+        Program.World.EnqueueFoodDeletion(this);
     }
 
     public override IEntityDto ToDTO() => new FoodDto(Id.ToString(), Position.X, Position.Y, Color.ToHex(), Size);

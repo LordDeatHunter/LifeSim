@@ -6,23 +6,20 @@ namespace LifeSim;
 
 public static class Program
 {
-    public static WorldStorage World { get; } = new();
+    public static WorldStorage World { get; private set; }
     public static int ReignitionCount { get; set; }
     public static readonly CancellationTokenSource Cts = new();
 
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         SocketLogic socketLogic = new();
-        LifeSimApi api = new();
-
-        var builder = WebApplication.CreateBuilder(args);
-        ServerSetup.ConfigureServices(builder);
-        builder.Services.AddControllers();
-        builder.Services.AddSingleton(api);
-
+        var builder = ServerSetup.ConfigureServices(args);
         var app = builder.Build();
         ServerSetup.ConfigureMiddleware(app, builder);
         app.MapControllers();
+
+        World = app.Services.GetRequiredService<WorldStorage>();
+        await World.LoadWorldAsync(app.Services);
 
         Console.CancelKeyPress += (_, e) =>
         {

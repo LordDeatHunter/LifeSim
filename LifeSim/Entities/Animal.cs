@@ -1,6 +1,7 @@
 ﻿using System.Drawing;
 using System.Numerics;
 using LifeSim.Data;
+using LifeSim.Data.Models;
 using LifeSim.States;
 using LifeSim.Utils;
 
@@ -22,11 +23,11 @@ public class Animal : Entity
     private const float DefaultHerbivoreReproCost = 3F;
     private const float DefaultCarnivoreReproCost = 4F;
 
-    public float Speed { get; private set; }
+    public float Speed { get; set; }
     private const float _maxSaturation = DefaultMaxSat;
     private float _currentSaturation = DefaultMaxSat / 2;
 
-    private readonly float _lifespan = 24F;
+    public float Lifespan { get; set; }
     private float _age;
 
     private float _predationInclination;
@@ -38,7 +39,7 @@ public class Animal : Entity
 
     private float _reproductionCooldown;
 
-    private float ReproductionCooldown
+    public float ReproductionCooldown
     {
         get => _reproductionCooldown;
         set => _reproductionCooldown = float.Max(value, 0F);
@@ -70,14 +71,13 @@ public class Animal : Entity
         set
         {
             _age = value;
-            if (_age >= _lifespan) MarkForDeletion();
+            if (_age >= Lifespan) MarkForDeletion();
         }
     }
 
-    private Animal(Vector2 position, float size, Color color) : base(position, color, size)
+    public Animal(Vector2 position, float size, Color color) : base(position, color, size)
     {
-        Program.World.Chunks[position.ToChunkPosition()].Animals.Add(this);
-        _lifespan += RandomUtils.RNG.NextSingle() * 16F + Size / 4F;
+        Lifespan = 24F + RandomUtils.RNG.NextSingle() * 16F + Size / 4F;
 
         HungerRate = DefaultHungerRate * MathF.Sqrt(Size);
         Speed = DefaultSpeed * (2.5F / MathF.Pow(Size, 0.4F));
@@ -249,8 +249,7 @@ public class Animal : Entity
     public override void MarkForDeletion()
     {
         base.MarkForDeletion();
-        Program.World.Chunks[Position.ToChunkPosition()].Animals.Remove(this);
-        Program.World.Animals.TryRemove(Id, out _);
+        Program.World.EnqueueAnimalDeletion(this);
     }
 
     public bool IsColliding(Entity other) => Vector2.Distance(Position, other.Position) <= (Size + other.Size) / 2F;
@@ -292,7 +291,7 @@ public class Animal : Entity
             PredationInclination = float.Clamp(predationInclination, 0F, 1F)
         };
 
-        Program.World.Animals[child.Id] = child;
+        Program.World.EnqueueAnimalAddition(child);
     }
 
     public bool CanMateWith(Animal animal) =>
@@ -301,7 +300,7 @@ public class Animal : Entity
 
     public bool CanReproduce() => ReproductionCooldown >= ReproductionCooldownThreshold &&
                                   Saturation >= HungerThresholdValue &&
-                                  Age >= _lifespan * 0F;
+                                  Age >= Lifespan * 0F;
 
     public bool AnimalIsInMatingRange(Animal animal) => Vector2.Distance(Position, animal.Position) <= MatingRange;
 
