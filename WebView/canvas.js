@@ -7,7 +7,7 @@ let camY = 0;
 let isPanning = false;
 let lastPanX = 0;
 let lastPanY = 0;
-let camScale = 1;
+let camScale = 0.5;
 
 const clampCam = () => {
   const scaledWidth = WORLD_WIDTH * camScale;
