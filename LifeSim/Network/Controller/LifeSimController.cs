@@ -26,42 +26,43 @@ public class LifeSimController(LifeSimApi api) : ControllerBase
     }
 
     [HttpGet("balance")]
-    public IActionResult GetBalance()
+    public async Task<IActionResult> GetBalance()
     {
         var clientId = ClientId.GetClientId(HttpContext);
         if (string.IsNullOrEmpty(clientId))
             return BadRequest(new { message = ClientIdMissingMessage });
 
-        var balance = api.GetOrCreateBalanceAsync(clientId, 100).Result;
+        var user = await api.GetOrCreateUserAsync(clientId);
 
-        return Ok(new { balance = balance.Amount });
+        return Ok(new { balance = user.Balance });
     }
 
     [HttpPost("place-bet")]
-    public IActionResult PlaceBet([FromBody] BetRequest betRequest)
+    public async Task<IActionResult> PlaceBet([FromBody] BetRequest betRequest)
     {
         var clientId = ClientId.GetClientId(HttpContext);
         if (string.IsNullOrEmpty(clientId))
             return BadRequest(new { message = ClientIdMissingMessage });
 
         var amount = betRequest.Amount;
-        var balance = api.GetOrCreateBalanceAsync(clientId, 100).Result;
+        var user = await api.GetOrCreateUserAsync(clientId);
 
         if (amount < 1)
             return BadRequest(new { message = "Bet amount must be greater than zero" });
 
-        if (amount > balance.Amount)
+        if (amount > user.Balance)
             return BadRequest(new { message = "Insufficient balance" });
 
         var betType = betRequest.BetType.ToLowerInvariant();
         if (betType != "increase" && betType != "decrease")
             return BadRequest(new { message = "Invalid bet type. Use 'increase' or 'decrease'" });
 
-        var bet = api.PlaceBetAsync(clientId, amount, betType).Result;
+        var bet = await api.PlaceBetAsync(clientId, amount, betType);
+        user = await api.GetOrCreateUserAsync(clientId);
 
         return Ok(new
         {
-            balance = balance.Amount,
+            balance = user.Balance,
             bet = new
             {
                 id = bet.Id,
@@ -75,37 +76,38 @@ public class LifeSimController(LifeSimApi api) : ControllerBase
     }
 
     [HttpGet("bets")]
-    public IActionResult GetBets()
+    public async Task<IActionResult> GetBets()
     {
         var clientId = ClientId.GetClientId(HttpContext);
         if (string.IsNullOrEmpty(clientId))
             return BadRequest(new { message = ClientIdMissingMessage });
 
-        var bets = api.GetBetsAsync(clientId).Result;
+        var bets = await api.GetBetsAsync(clientId);
         return Ok(bets);
     }
 
     [HttpGet("bet/{id:guid}")]
-    public IActionResult GetBetById(Guid id)
+    public async Task<IActionResult> GetBetById(Guid id)
     {
         var clientId = ClientId.GetClientId(HttpContext);
         if (string.IsNullOrEmpty(clientId))
             return BadRequest(new { message = ClientIdMissingMessage });
 
-        if (!api.GetOrCreateBetsForUser(clientId).TryGetValue(id, out var bet))
+        var bet = await api.GetBetByIdAsync(id);
+        if (bet == null || bet.ClientId != clientId)
             return NotFound(new { message = "Bet not found" });
 
         return Ok(bet);
     }
 
     [HttpGet("leaderboards")]
-    public IActionResult GetLeaderboards()
+    public async Task<IActionResult> GetLeaderboards()
     {
-        return Ok(api.GetLeaderboardsAsync().Result);
+        return Ok(await api.GetLeaderboardsAsync());
     }
 
     [HttpPost("set-name")]
-    public IActionResult SetName([FromBody] NameRequest nameRequest)
+    public async Task<IActionResult> SetName([FromBody] NameRequest nameRequest)
     {
         var clientId = ClientId.GetClientId(HttpContext);
         if (string.IsNullOrEmpty(clientId))
@@ -116,17 +118,23 @@ public class LifeSimController(LifeSimApi api) : ControllerBase
 
         var name = nameRequest.Name.Trim().Replace(" ", "_");
 
-        if (api.Names.TryGetValue(clientId, out var value) && value == name)
-            return NoContent();
-
         var originalNameLength = name.Length;
         if (originalNameLength is < 3 or > 20)
             return BadRequest(new { message = "Name must be between 3 and 20 characters" });
 
-        for (var i = 1; api.Names.Values.Contains(name); i++)
-            name = $"{name[..(originalNameLength)]}_{i}";
+        var user = await api.GetOrCreateUserAsync(clientId);
+        if (user.Name == name)
+            return NoContent();
 
-        api.Names[clientId] = name;
+        
+        var originalName = name;
+        var index = 1;
+        while (await api.IsNameTakenAsync(name))
+            name = $"{originalName}_{index++}";
+        
+        user.Name = name;
+        await api.UpdateUserAsync(user);
+
         return NoContent();
     }
 }

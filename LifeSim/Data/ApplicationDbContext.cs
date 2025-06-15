@@ -6,7 +6,7 @@ namespace LifeSim.Data;
 
 public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> opts) : DbContext(opts)
 {
-    public DbSet<Balance> Balances { get; set; }
+    public DbSet<User> Users { get; set; }
     public DbSet<Bet> Bets { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

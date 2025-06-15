@@ -5,24 +5,22 @@ namespace LifeSim.Data;
 
 public static class ApplicationDbContextExtensions
 {
-    public static async Task<Balance> GetOrCreateBalanceAsync(
-        this ApplicationDbContext db,
-        string clientId,
-        ulong initialAmount = 100
-    )
+    public static async Task<User> GetOrCreateUserAsync(this ApplicationDbContext db, string clientId, ulong initialBalance = 100)
     {
-        var bal = await db.Balances.SingleOrDefaultAsync(b => b.ClientId == clientId);
+        var user = await db.Users.FindAsync(clientId);
+        if (user != null) return user;
 
-        if (bal != null) return bal;
-
-        bal = new Balance
+        user = new User
         {
             ClientId = clientId,
-            Amount = initialAmount
+            Name     = clientId,
+            Balance  = initialBalance
         };
-        await db.Balances.AddAsync(bal);
+        db.Users.Add(user);
 
-        return bal;
+        await db.SaveChangesAsync();
+
+        return user;
     }
 
     public static async Task<Bet> PlaceBetAsync(
@@ -58,11 +56,5 @@ public static class ApplicationDbContextExtensions
         return db.PendingBets()
             .Where(b => b.ExpiresAt <= now && b.Status == nameof(BetStatus.Pending))
             .ToListAsync();
-    }
-          
-    public static async Task<Dictionary<string, ulong>> GetBalancesAsync(this ApplicationDbContext db)
-    {
-        return await db.Balances
-            .ToDictionaryAsync(b => b.ClientId, b => b.Amount);
     }
 }

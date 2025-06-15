@@ -1,5 +1,4 @@
-﻿using System.Collections.Concurrent;
-using LifeSim.Data;
+﻿using LifeSim.Data;
 using LifeSim.Data.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,8 +6,6 @@ namespace LifeSim.Network;
 
 public class LifeSimApi
 {
-    public ConcurrentDictionary<string, string> Names { get; } = new();
-
     private readonly IServiceScopeFactory _scopeFactory;
 
     public LifeSimApi(IServiceScopeFactory scopeFactory)
@@ -33,16 +30,16 @@ public class LifeSimApi
             {
                 using var scope = _scopeFactory.CreateScope();
                 var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                var zeroBalances = await db.Balances
-                    .Where(b => b.Amount == 0)
+                var brokeUsers = await db.Users
+                    .Where(u => u.Balance == 0)
                     .ToListAsync();
 
-                foreach (var balance in zeroBalances)
+                foreach (var user in brokeUsers)
                 {
-                    balance.Amount = 100;
+                    user.Balance = 100;
                 }
 
-                if (zeroBalances.Count != 0) await db.SaveChangesAsync();
+                if (brokeUsers.Count != 0) await db.SaveChangesAsync();
 
                 await Task.Delay(TimeSpan.FromMinutes(30));
             }
@@ -66,13 +63,13 @@ public class LifeSimApi
 
                 foreach (var bet in expiredPendingBets)
                 {
-                    var balance = await db.GetOrCreateBalanceAsync(bet.ClientId);
+                    var user = await db.GetOrCreateUserAsync(bet.ClientId);
 
                     if (finalCount == bet.InitialCount)
                     {
                         bet.Status = nameof(BetStatus.Expired);
 
-                        balance.Amount += bet.Amount;
+                        user.Balance += bet.Amount;
 
                         continue;
                     }
@@ -85,7 +82,7 @@ public class LifeSimApi
 
                     if (!won) continue;
 
-                    balance.Amount += bet.Amount * 2;
+                    user.Balance += bet.Amount * 2;
                 }
 
                 if (expiredPendingBets.Count != 0) await db.SaveChangesAsync();
@@ -109,21 +106,32 @@ public class LifeSimApi
             .GroupBy(b => b.ClientId)
             .Select(g => new
             {
-                Name = g.Key,
+                ClientId = g.Key,
                 BetCount = g.Count(),
                 Score = g.Sum(b => (long)b.Amount)
             })
             .OrderByDescending(x => x.Score)
             .Take(10)
+            .Join(
+                db.Users,
+                bet => bet.ClientId,
+                user => user.ClientId,
+                (bet, user) => new
+                {
+                    user.Name,
+                    bet.BetCount,
+                    bet.Score
+                }
+            )
             .ToListAsync();
 
-        var topBalances = await db.Balances
-            .OrderByDescending(b => (long)b.Amount)
-            .Select(b => new
+        var topBalances = await db.Users
+            .Select(u => new
             {
-                Name = b.ClientId,
-                Score = b.Amount
+                u.Name,
+                Score = u.Balance
             })
+            .OrderByDescending(x => (long)x.Score)
             .Take(10)
             .ToListAsync();
 
@@ -139,8 +147,8 @@ public class LifeSimApi
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-        var balance = await db.GetOrCreateBalanceAsync(clientId);
-        balance.Amount -= amount;
+        var user = await db.GetOrCreateUserAsync(clientId);
+        user.Balance -= amount;
 
         var bet = await db.PlaceBetAsync(
             clientId,
@@ -166,22 +174,32 @@ public class LifeSimApi
             .ToListAsync();
     }
 
-    public async Task<Balance> GetOrCreateBalanceAsync(string clientId, ulong initialAmount)
+    public async Task<User> GetOrCreateUserAsync(string clientId, ulong initialBalance = 100)
     {
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        await db.Database.EnsureCreatedAsync();
-        return await db.GetOrCreateBalanceAsync(clientId, initialAmount);
+        return await db.GetOrCreateUserAsync(clientId, initialBalance);
     }
 
-    public Dictionary<Guid, Bet> GetOrCreateBetsForUser(string clientId)
+    public async Task<Bet?> GetBetByIdAsync(Guid id)
     {
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var bets = db.PendingBets()
-            .Where(bet => bet.ClientId == clientId)
-            .ToDictionary(bet => bet.Id, bet => bet);
+        return await db.Bets.FindAsync(id);
+    }
 
-        return bets;
+    public async Task<bool> IsNameTakenAsync(string name)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        return await db.Users.AnyAsync(u => u.Name == name);
+    }
+
+    public async Task UpdateUserAsync(User user)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        db.Users.Update(user);
+        await db.SaveChangesAsync();
     }
 }
