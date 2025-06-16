@@ -1,6 +1,8 @@
 using System.Runtime.Loader;
+using LifeSim.Data;
 using LifeSim.Network;
 using LifeSim.World;
+using Microsoft.EntityFrameworkCore;
 
 namespace LifeSim;
 
@@ -17,6 +19,12 @@ public static class Program
         var app = builder.Build();
         ServerSetup.ConfigureMiddleware(app, builder);
         app.MapControllers();
+
+        using(var scope = app.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            await db.Database.MigrateAsync();
+        }
 
         World = app.Services.GetRequiredService<WorldStorage>();
         await World.LoadWorldAsync(app.Services);
