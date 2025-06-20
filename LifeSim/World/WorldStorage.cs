@@ -148,11 +148,11 @@ public class WorldStorage
         using var scope = services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-        var foods = await db.Foods.ToListAsync();
-        var animals = await db.Animals.ToListAsync();
+        var foods = await db.Foods.AsNoTracking().ToListAsync();
+        var animals = await db.Animals.AsNoTracking().ToListAsync();
 
-        db.Foods.RemoveRange(foods);
-        db.Animals.RemoveRange(animals);
+        await db.Foods.ExecuteDeleteAsync();
+        await db.Animals.ExecuteDeleteAsync();
 
         await db.SaveChangesAsync();
         

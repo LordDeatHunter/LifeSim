@@ -36,4 +36,6 @@ public class Food : Entity
     }
 
     public override IEntityDto ToDTO() => new FoodDto(Id.ToString(), Position.X, Position.Y, Color.ToHex(), Size);
+
+    public override float NutritionValue => Size / 2F;
 }

@@ -23,40 +23,6 @@ const getTimeString = (milliseconds) => {
   return `${daysStr}d ${hoursStr}h ${minutesStr}m ${secondsStr}.${remainingStr}s`;
 };
 
-const lerpRGB = (color1, color2, t) => {
-  const r1 = parseInt(color1.slice(1, 3), 16);
-  const g1 = parseInt(color1.slice(3, 5), 16);
-  const b1 = parseInt(color1.slice(5, 7), 16);
-
-  const r2 = parseInt(color2.slice(1, 3), 16);
-  const g2 = parseInt(color2.slice(3, 5), 16);
-  const b2 = parseInt(color2.slice(5, 7), 16);
-
-  const r = Math.round(lerp(r1, r2, t));
-  const g = Math.round(lerp(g1, g2, t));
-  const b = Math.round(lerp(b1, b2, t));
-
-  return `#${toPaddedString(r.toString(16))}${toPaddedString(g.toString(16))}${toPaddedString(b.toString(16))}`;
-};
-
-const getOutlineColor = (entity, type) => {
-  if (type !== "animal") return undefined;
-
-  if (entity.predationInclanation === undefined) return "#ffaf2e";
-
-  const low = "#309898";
-  const mid = "#ffaf2e";
-  const high = "#cb0404";
-
-  if (entity.predationInclanation <= 0.5) {
-    const t = entity.predationInclanation / 0.5;
-    return lerpRGB(low, mid, t);
-  } else {
-    const t = (entity.predationInclanation - 0.5) / 0.5;
-    return lerpRGB(mid, high, t);
-  }
-};
-
 const valueToHexSegment = (color) =>
   Math.floor(color * 255)
     .toString(16)

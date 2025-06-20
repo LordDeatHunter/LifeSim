@@ -25,7 +25,9 @@ public class AnimalEntity
     public float Speed { get; set; }
     public float Age { get; set; }
     public float Lifespan { get; set; }
-    
+    public float Health { get; set; }
+    public float MaxHealth { get; set; }
+
     public static Animal FromDomain(AnimalEntity animalEntity)
     {
         var position = new Vector2(animalEntity.X, animalEntity.Y);
@@ -37,7 +39,8 @@ public class AnimalEntity
             PredationInclination = animalEntity.PredationInclination,
             Saturation = animalEntity.Saturation,
             Age = animalEntity.Age,
-            Lifespan = animalEntity.Lifespan
+            Lifespan = animalEntity.Lifespan,
+            MaxHealth = animalEntity.MaxHealth
         };
         return animal;
     }
@@ -55,6 +58,8 @@ public class AnimalEntity
             PredationInclination = animal.PredationInclination,
             Saturation = animal.Saturation,
             Age = animal.Age,
-            Lifespan = animal.Lifespan
+            Lifespan = animal.Lifespan,
+            MaxHealth = animal.MaxHealth,
+            Health = animal.Health
         };
 }

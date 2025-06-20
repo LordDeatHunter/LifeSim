@@ -181,15 +181,10 @@ const render = () => {
       const color = appendAlpha(curr.color, opacity);
       const size = curr.size;
 
-      let outline;
-      if (type === "animal") {
-        outline = appendAlpha(getOutlineColor(curr, type), opacity);
-      }
-
       if (type === "food") {
         renderFood({ x, y }, size, opacity);
       } else {
-        renderEntity({ x, y }, size, outline ?? color, outline);
+        renderEntity({ x, y }, size, color, color);
       }
     }
   }
@@ -208,14 +203,10 @@ const render = () => {
 
       recentlyDespawned[type][id].opacity -= 0.03 * t;
 
-      let outline;
-      if (type === "animal") {
-        outline = appendAlpha(getOutlineColor(entity, type), opacity);
-      }
       if (type === "food") {
         renderFood({ x, y }, size, opacity);
       } else {
-        renderEntity({ x, y }, size, outline ?? color, outline);
+        renderEntity({ x, y }, size, color, color);
       }
     }
   }

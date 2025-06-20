@@ -27,5 +27,16 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> opts) :
                 )
             )
             .HasColumnType("TEXT");
+
+        modelBuilder.Entity<AnimalEntity>(b =>
+        {
+            b.Property(e => e.Health)
+                .IsRequired()
+                .HasDefaultValue(20F);
+
+            b.Property(e => e.MaxHealth)
+                .IsRequired()
+                .HasDefaultValue(20F);
+        });
     }
 }

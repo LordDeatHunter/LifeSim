@@ -1,7 +1,6 @@
 ﻿using System.Drawing;
 using System.Numerics;
 using LifeSim.Data;
-using LifeSim.Data.Models;
 using LifeSim.States;
 using LifeSim.Utils;
 
@@ -9,9 +8,11 @@ namespace LifeSim.Entities;
 
 public class Animal : Entity
 {
+    private const float CorpseLifespan = 10F;
+
     private const float DefaultSpeed = 16F;
     private const float DefaultHungerRate = 0.5F;
-    private const float DefaultMaxSat = 20F;
+    private const float DefaultMaxSat = 30F;
 
     private const float SizeDifferenceThreshold = 5F;
     private const float MatePadding = 4F;
@@ -24,13 +25,13 @@ public class Animal : Entity
     private const float DefaultCarnivoreReproCost = 4F;
 
     public float Speed { get; set; }
-    private const float _maxSaturation = DefaultMaxSat;
     private float _currentSaturation = DefaultMaxSat / 2;
 
     public float Lifespan { get; set; }
-    private float _age;
 
     private float _predationInclination;
+
+    // Animal's food preference, with 0 being herbivore and 1 being carnivore.
     public float PredationInclination
     {
         get => _predationInclination;
@@ -48,10 +49,9 @@ public class Animal : Entity
     public float Saturation
     {
         get => _currentSaturation;
-        set
-        {
-            _currentSaturation = float.Min(_maxSaturation, value);
-            if (_currentSaturation <= 0) MarkForDeletion();
+        set {
+            _currentSaturation = float.Min(DefaultMaxSat, value);
+            if (_currentSaturation <= 0F) DeathAge = Age;
         }
     }
 
@@ -65,15 +65,48 @@ public class Animal : Entity
 
     public float HungerRate { get; }
 
-    public float Age
-    {
+    private float _age;
+    public float Age {
         get => _age;
         set
         {
             _age = value;
-            if (_age >= Lifespan) MarkForDeletion();
+            if (_age >= Lifespan) DeathAge = _age;
         }
     }
+
+    private float _deathAge = -1F;
+    private float DeathAge
+    {
+        get => _deathAge;
+        set
+        {
+            if (_deathAge >= 0F) return;
+            _deathAge = value;
+            _deathColor = Color;
+        }
+    }
+    private Color _deathColor;
+    public bool Dead => DeathAge >= 0F;
+    public float RotAmount => Dead ? MathF.Max(0F, Age - DeathAge) / CorpseLifespan : 0F;
+    private readonly float _maxHealth = 20F;
+    public float MaxHealth
+    {
+        get => _maxHealth;
+        init
+        {
+            _maxHealth = float.Clamp(value, 5F, 50F);
+            Health = _maxHealth;
+        }
+    }
+
+    private float _health;
+    public float Health
+    {
+        get => _health;
+        private set => _health = float.Clamp(value, 0F, MaxHealth);
+    }
+
 
     public Animal(Vector2 position, float size, Color color) : base(position, color, size)
     {
@@ -91,15 +124,42 @@ public class Animal : Entity
 
     public override void Update(float deltaTime)
     {
+        if (MarkedForDeletion) return;
+
         Age += deltaTime;
+
+        if (Dead)
+        {
+            if (Age >= DeathAge + CorpseLifespan)
+            {
+                MarkForDeletion();
+                return;
+            }
+
+            var t = float.Clamp(RotAmount, 0f, 1f);
+            var gray = _deathColor.ToGrayscale();
+            Color  = ColorUtils.Lerp(_deathColor, gray, t);
+
+            return;
+        }
+
+        var amount = PredationInclination / 0.5F;
+        if (PredationInclination <= 0.5F)
+        {
+            Color = ColorUtils.Lerp(Color.FromArgb(0x309898), Color.FromArgb(0xffaf2e), amount);
+        }
+        else
+        {
+            amount = (PredationInclination - 0.5F) / 0.5F;
+            Color = ColorUtils.Lerp(Color.FromArgb(0xffaf2e), Color.FromArgb(0xcb0404), amount);
+        }
+
         Saturation -= HungerRate * deltaTime;
         ReproductionCooldown += deltaTime;
 
         var foodPreferenceOffset = CompareFoodTypes();
 
         PredationInclination += foodPreferenceOffset * 0.1F * deltaTime;
-
-        if (MarkedForDeletion) return;
 
         var prevPosition = Position;
         var prevChunkPosition = prevPosition.ToChunkPosition();
@@ -121,9 +181,10 @@ public class Animal : Entity
         {
             var chunkPos = Position.ToChunkPosition() + new Vector2(dx, dy);
             if (!Program.World.Chunks.TryGetValue(chunkPos, out var chunk)) continue;
-            
+
             foodCount += chunk.Food.Count;
-            animalCount += chunk.Animals.Count(other => other != this && !other.MarkedForDeletion && Size >= other.Size);
+            animalCount +=
+                chunk.Animals.Count(other => other != this && !other.MarkedForDeletion && Size >= other.Size);
         }
 
         if (foodCount > animalCount * 2) return -1;
@@ -183,7 +244,7 @@ public class Animal : Entity
         {
             foreach (var food in Program.World.Foods.Values.Where(f => !f.MarkedForDeletion))
             {
-                var score = FoodValue(food) / herbWeight;
+                var score = FoodValueHeuristic(food) / herbWeight;
                 if (score >= bestScore) continue;
                 bestScore = score;
                 best = food;
@@ -193,9 +254,9 @@ public class Animal : Entity
         var carnWeight = PredationInclination;
         if (carnWeight > 0f)
         {
-            foreach (var ani in Program.World.Animals.Values.Where(CanEatAnimal))
+            foreach (var ani in Program.World.Animals.Values.Where(IsPrey))
             {
-                var score = FoodValue(ani) / carnWeight;
+                var score = FoodValueHeuristic(ani) / carnWeight;
                 if (score >= bestScore) continue;
                 bestScore = score;
                 best = ani;
@@ -219,7 +280,7 @@ public class Animal : Entity
             foreach (var other in chunk.Animals)
             {
                 if (other == this || other.MarkedForDeletion) continue;
-                if (!other.CanEatAnimal(this)) continue;
+                if (!other.CanKillAnimal(this)) continue;
                 if (!IsAnimalInDangerDistance(other, threatRadius)) continue;
 
                 var d2 = Vector2.DistanceSquared(Position, other.Position);
@@ -238,8 +299,8 @@ public class Animal : Entity
         return Vector2.DistanceSquared(Position, other.Position) <= safeDistance * safeDistance;
     }
 
-    public float FoodValue(Entity entity) =>
-        Vector2.Distance(entity.Position, Position) / Speed + entity.Size / 2F / Saturation;
+    public float FoodValueHeuristic(Entity entity) =>
+        Vector2.Distance(entity.Position, Position) / Speed + entity.NutritionValue / Saturation;
 
     public Animal? FindNearestMate() => Program.World.Animals.Values
         .Where(AreCompatibleForMating)
@@ -285,10 +346,13 @@ public class Animal : Entity
         var color = GetOffspringColor(partner);
         var predationInclination = (PredationInclination + partner.PredationInclination) / 2F +
                                    (RandomUtils.RNG.NextSingle() * 0.1F - 0.05F);
+        
+        var maxHealth = (MaxHealth + partner.MaxHealth) / 2F + RandomUtils.RNG.NextSingle() * 5F - 2.5F;
 
         var child = new Animal(position, size, color)
         {
-            PredationInclination = float.Clamp(predationInclination, 0F, 1F)
+            PredationInclination = float.Clamp(predationInclination, 0F, 1F),
+            MaxHealth = maxHealth,
         };
 
         Program.World.EnqueueAnimalAddition(child);
@@ -298,7 +362,8 @@ public class Animal : Entity
         AreCompatibleForMating(animal) &&
         AnimalIsInMatingRange(animal);
 
-    public bool CanReproduce() => ReproductionCooldown >= ReproductionCooldownThreshold &&
+    public bool CanReproduce() => !Dead &&
+                                  ReproductionCooldown >= ReproductionCooldownThreshold &&
                                   Saturation >= HungerThresholdValue &&
                                   Age >= Lifespan * 0F;
 
@@ -336,9 +401,17 @@ public class Animal : Entity
 
             foreach (var animal in chunk.Animals.Where(animal => animal != this && IsColliding(animal)))
             {
-                if (TargetEntity == animal && CanEatAnimal(animal))
+                if (TargetEntity == animal)
                 {
-                    Consume(animal);
+                    if (CanEatAnimal(animal))
+                    {
+                        Consume(animal);
+                    }
+
+                    if (CanKillAnimal(animal))
+                    {
+                        animal.Health -= (Size - animal.Size) * 0.5F;
+                    }
                     continue;
                 }
 
@@ -362,16 +435,24 @@ public class Animal : Entity
         other.Position -= direction * force;
     }
 
-    private bool CanEatAnimal(Animal other) => other != this && !other.MarkedForDeletion && Size >= other.Size &&
-                                               PredationInclination - other.PredationInclination >= 0.2F;
+    private bool IsPrey(Animal other) => other != this &&
+                                         !other.MarkedForDeletion &&
+                                         Size >= other.Size &&
+                                         PredationInclination - other.PredationInclination >= 0.2F;
+
+    private bool CanEatAnimal(Animal other) => IsPrey(other) && other.Dead;
+
+    private bool CanKillAnimal(Animal other) => IsPrey(other) && !other.Dead;
 
     public void Consume(Entity entity)
     {
-        Saturation += entity.Size / 2F;
+        Saturation += entity.NutritionValue;
         entity.MarkForDeletion();
         if (TargetEntity == entity) TargetEntity = null;
     }
 
     public override IEntityDto ToDTO() =>
-        new AnimalDto(Id.ToString(), Position.X, Position.Y, Color.ToHex(), Size, PredationInclination);
+        new AnimalDto(Id.ToString(), Position.X, Position.Y, Color.ToHex(), Size, PredationInclination, Dead);
+
+    public override float NutritionValue => Size / 2F * (1F - RotAmount);
 }

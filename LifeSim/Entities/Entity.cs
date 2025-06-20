@@ -29,4 +29,6 @@ public abstract class Entity(Vector2 position, Color color, float size = 8F)
     }
 
     public abstract IEntityDto ToDTO();
+    
+    public abstract float NutritionValue { get; }
 }

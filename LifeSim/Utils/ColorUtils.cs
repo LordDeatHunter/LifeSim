@@ -6,7 +6,7 @@ namespace LifeSim.Utils;
 public static class ColorUtils
 {
     public static string ToHex(this Color color) => $"#{color.R:X2}{color.G:X2}{color.B:X2}";
-    
+
     public static Color FromHex(string hex)
     {
         if (string.IsNullOrEmpty(hex) || hex is not ['#', _, _, _, _, _, _])
@@ -49,5 +49,22 @@ public static class ColorUtils
             4 => Color.FromArgb(alpha, iMid, iMin, iMax),
             _ => Color.FromArgb(alpha, iMax, iMin, iMid)
         };
+    }
+
+    public static float Lerp(float a, float b, float t) => a + (b - a) * t;
+
+    public static Color Lerp(Color h, Color s, float l) =>
+        Color.FromArgb(
+            (int)Lerp(h.A, s.A, l),
+            (int)Lerp(h.R, s.R, l),
+            (int)Lerp(h.G, s.G, l),
+            (int)Lerp(h.B, s.B, l)
+        );
+
+    public static Color ToGrayscale(this Color c)
+    {
+        var lumF = c.R * 0.2126f + c.G * 0.7152f + c.B * 0.0722f;
+        var lum = (int)MathF.Round(float.Clamp(lumF, 0, 255));
+        return Color.FromArgb(c.A, lum, lum, lum);
     }
 }
