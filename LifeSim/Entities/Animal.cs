@@ -10,7 +10,6 @@ public class Animal : Entity
 {
     private const float CorpseLifespan = 10F;
 
-    private const float DefaultSpeed = 16F;
     private const float DefaultHungerRate = 0.5F;
     private const float DefaultMaxSat = 30F;
 
@@ -27,7 +26,11 @@ public class Animal : Entity
     public float Speed { get; set; }
     private float _currentSaturation = DefaultMaxSat / 2;
 
-    public float Lifespan { get; set; }
+    private float _lifespan;
+    public float Lifespan {
+        get => _lifespan;
+        set => _lifespan = float.Clamp(value, 10F, 80F);
+    }
 
     private float _predationInclination;
 
@@ -37,9 +40,15 @@ public class Animal : Entity
         get => _predationInclination;
         set => _predationInclination = float.Clamp(value, 0F, 1F);
     }
+    
+    private readonly float _defaultSpeed;
+    private float DefaultSpeed
+    {
+        get => _defaultSpeed;
+        init => _defaultSpeed = float.Clamp(value, 4F, 32F);
+    }
 
     private float _reproductionCooldown;
-
     public float ReproductionCooldown
     {
         get => _reproductionCooldown;
@@ -108,9 +117,9 @@ public class Animal : Entity
     }
 
 
-    public Animal(Vector2 position, float size, Color color) : base(position, color, size)
+    public Animal(Vector2 position, float size, Color color, float defaultSpeed) : base(position, color, size)
     {
-        Lifespan = 24F + RandomUtils.RNG.NextSingle() * 16F + Size / 4F;
+        DefaultSpeed = defaultSpeed;
 
         HungerRate = DefaultHungerRate * MathF.Sqrt(Size);
         Speed = DefaultSpeed * (2.5F / MathF.Pow(Size, 0.4F));
@@ -118,8 +127,9 @@ public class Animal : Entity
         StateMachine = new AnimalStateMachine(this);
     }
 
-    public Animal(Vector2 position) : this(position, 8F, Color.CornflowerBlue)
+    public Animal(Vector2 position) : this(position, 8F, Color.CornflowerBlue, 16F)
     {
+        Lifespan = 24F + RandomUtils.RNG.NextSingle() * 16F + 2F;
     }
 
     public override void Update(float deltaTime)
@@ -346,13 +356,15 @@ public class Animal : Entity
         var color = GetOffspringColor(partner);
         var predationInclination = (PredationInclination + partner.PredationInclination) / 2F +
                                    (RandomUtils.RNG.NextSingle() * 0.1F - 0.05F);
-        
         var maxHealth = (MaxHealth + partner.MaxHealth) / 2F + RandomUtils.RNG.NextSingle() * 5F - 2.5F;
+        var speed = (Speed + partner.Speed) / 2F + RandomUtils.RNG.NextSingle() * 2F - 1F;
+        var lifespan = (Lifespan + partner.Lifespan) / 2F + RandomUtils.RNG.NextSingle() * 8F - 4F;
 
-        var child = new Animal(position, size, color)
+        var child = new Animal(position, size, color, speed)
         {
             PredationInclination = float.Clamp(predationInclination, 0F, 1F),
             MaxHealth = maxHealth,
+            Lifespan = lifespan,
         };
 
         Program.World.EnqueueAnimalAddition(child);

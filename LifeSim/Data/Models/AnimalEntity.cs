@@ -23,6 +23,7 @@ public class AnimalEntity
     public float Saturation { get; set; }
     public float ReproductionCooldown { get; set; }
     public float Speed { get; set; }
+    public float DefaultSpeed { get; set; }
     public float Age { get; set; }
     public float Lifespan { get; set; }
     public float Health { get; set; }
@@ -32,7 +33,7 @@ public class AnimalEntity
     {
         var position = new Vector2(animalEntity.X, animalEntity.Y);
         var color = ColorUtils.FromHex(animalEntity.ColorHex);
-        var animal = new Animal(position, animalEntity.Size, color)
+        var animal = new Animal(position, animalEntity.Size, color, animalEntity.DefaultSpeed)
         {
             Speed = animalEntity.Speed,
             ReproductionCooldown = animalEntity.ReproductionCooldown,

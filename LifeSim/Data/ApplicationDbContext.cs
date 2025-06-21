@@ -37,6 +37,10 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> opts) :
             b.Property(e => e.MaxHealth)
                 .IsRequired()
                 .HasDefaultValue(20F);
+            
+            b.Property(e => e.DefaultSpeed)
+                .IsRequired()
+                .HasDefaultValue(16F);
         });
     }
 }
