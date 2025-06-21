@@ -202,4 +202,16 @@ public class LifeSimApi
         db.Users.Update(user);
         await db.SaveChangesAsync();
     }
+    
+    public async Task AddBalanceAsync(string clientId, long amount)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var user = await db.GetOrCreateUserAsync(clientId);
+
+        var newBalance = (long)user.Balance + amount;
+        user.Balance = (ulong)Math.Max(0, newBalance);
+        
+        await db.SaveChangesAsync();
+    }
 }

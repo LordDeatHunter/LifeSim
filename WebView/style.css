@@ -66,24 +66,24 @@ body {
 
 #right-info {
   position: absolute;
-  right: -260px;
+  right: -280px;
   top: 100px;
   display: flex;
   flex-direction: column;
   align-self: flex-start;
-  width: 220px;
+  width: 240px;
   margin-left: 32px;
 }
 
 #left-info {
   position: absolute;
-  left: -260px;
+  left: -200px;
   top: 100px;
 
   display: flex;
   flex-direction: column;
   align-self: flex-start;
-  width: 220px;
+  width: 240px;
   margin-right: 32px;
 }
 

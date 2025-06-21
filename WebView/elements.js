@@ -5,7 +5,8 @@ const reigniteLife = () => {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ chaos: reignitionChaosSlider.value }),
-  });
+    credentials: "include",
+  }).then(() => updateBalanceDisplay());
 };
 
 let canvas;
@@ -18,6 +19,9 @@ let entityCategoryDisplays;
 let reignitionCounter;
 let reignitionChaosSlider;
 let reignitionChaosLabel;
+let reignitionCost;
+
+const calculateReignitionCost = (value) => Math.floor(25 + 975 * value);
 
 document.addEventListener("DOMContentLoaded", () => {
   canvas = document.getElementById("view");
@@ -32,10 +36,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
   reignitionChaosSlider = document.getElementById("reignition-chaos-slider");
   reignitionChaosLabel = document.getElementById("reignition-chaos-label");
+  reignitionCost = document.getElementById("reignition-cost");
+  reignitionCost.innerText = calculateReignitionCost(
+    reignitionChaosSlider.value,
+  ).toString();
 
   reignitionChaosSlider.addEventListener("input", () => {
     const value = parseFloat(reignitionChaosSlider.value).toFixed(2);
     reignitionChaosLabel.innerText = `💥 Chaos: ${value}`;
+    reignitionCost.innerText = calculateReignitionCost(value).toString();
   });
 
   reignitionCounter = document.getElementById("reignition-counter");

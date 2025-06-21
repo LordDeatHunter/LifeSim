@@ -11,19 +11,31 @@ public class LifeSimController(LifeSimApi api) : ControllerBase
     private const string ClientIdMissingMessage = "Client ID is required";
 
     [HttpPost("reignite-life")]
-    public IActionResult ReigniteLife([FromBody] ReigniteRequest request)
+    public async Task<IActionResult> ReigniteLife([FromBody] ReigniteRequest request)
     {
+        var clientId = ClientId.GetClientId(HttpContext);
+        if (string.IsNullOrEmpty(clientId))
+            return BadRequest(new { message = ClientIdMissingMessage });
+
         if (!Program.World.Animals.IsEmpty)
             return BadRequest(new { message = "Life is already thriving" });
 
         var chaos = float.Clamp(request.Chaos ?? 0F, 0F, 1F);
+        var reignitionCost = (long)(25F + 975F * chaos);
+
+        var user = api.GetOrCreateUserAsync(clientId).Result;
+        if (user.Balance < (ulong)reignitionCost)
+            return BadRequest(new { message = "Insufficient balance to reignite life", required = reignitionCost, balance = user.Balance });
+
+        await api.AddBalanceAsync(clientId, -reignitionCost);
+
         var animalCount = (int)RandomUtils.RNG.GenerateChaosFloat(10F, chaos, 0.2F, 4F);
         var posOffset = 200F + 400F * chaos;
 
         Program.World.SpawnAnimals(animalCount, 1000F - posOffset, 1000F + posOffset, chaos);
         Program.ReignitionCount += 1;
 
-        return Ok(new { message = "Life reignited" });
+        return Ok(new { message = "Life reignited", balance = user.Balance });
     }
 
     [HttpGet("balance")]
