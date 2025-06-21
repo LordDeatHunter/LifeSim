@@ -71,7 +71,7 @@ public class BroadcastLoop(SocketLogic socketLogic, WorldStorage world)
                 }
             }
 
-            await Task.Delay(300);
+            await Task.Delay(300, Program.Cts.Token);
         }
     }
 

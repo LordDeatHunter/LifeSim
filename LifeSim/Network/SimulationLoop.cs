@@ -45,7 +45,7 @@ public class SimulationLoop(WorldStorage world)
                 Console.WriteLine("Error in simulation loop: " + ex);
             }
 
-            await Task.Delay(16);
+            await Task.Delay(16, Program.Cts.Token);
         }
     }
 }
