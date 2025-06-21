@@ -54,14 +54,17 @@ public class WorldStorage
         }
     }
 
-    public void SpawnAnimals(int amount, Vector2 startPosition, Vector2 endPosition)
+    public void SpawnAnimals(int amount, Vector2 startPosition, Vector2 endPosition, float chaos = 0f)
     {
         for (var i = 0; i < amount; i++)
         {
             var x = RandomUtils.RNG.Next((int)startPosition.X, (int)endPosition.X);
             var y = RandomUtils.RNG.Next((int)startPosition.Y, (int)endPosition.Y);
+            
+            var position = new Vector2(x, y);
 
-            var animal = new Animal(new Vector2(x, y));
+            var animal = Animal.CreateWithChaos(position, chaos);
+
             Program.World.EnqueueAnimalAddition(animal);
         }
     }
@@ -141,7 +144,7 @@ public class WorldStorage
     }
 
     public void SpawnFood(int amount, float x, float y) => SpawnFood(amount, Vector2.One * x, Vector2.One * y);
-    public void SpawnAnimals(int amount, float x, float y) => SpawnAnimals(amount, Vector2.One * x, Vector2.One * y);
+    public void SpawnAnimals(int amount, float x, float y, float chaos = 0F) => SpawnAnimals(amount, Vector2.One * x, Vector2.One * y, chaos);
 
     public async Task LoadWorldAsync(IServiceProvider services)
     {

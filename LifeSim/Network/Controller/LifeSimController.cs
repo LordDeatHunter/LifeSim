@@ -1,5 +1,4 @@
-﻿using LifeSim.Data;
-using LifeSim.Network.Request;
+﻿using LifeSim.Network.Request;
 using LifeSim.Utils;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,14 +11,16 @@ public class LifeSimController(LifeSimApi api) : ControllerBase
     private const string ClientIdMissingMessage = "Client ID is required";
 
     [HttpPost("reignite-life")]
-    public IActionResult ReigniteLife()
+    public IActionResult ReigniteLife([FromBody] ReigniteRequest request)
     {
         if (!Program.World.Animals.IsEmpty)
             return BadRequest(new { message = "Life is already thriving" });
 
-        var animalCount = RandomUtils.RNG.Next(4, 16);
+        var chaos = float.Clamp(request.Chaos ?? 0F, 0F, 1F);
+        var animalCount = (int)RandomUtils.RNG.GenerateChaosFloat(10F, chaos, 0.2F, 4F);
+        var posOffset = 200F + 400F * chaos;
 
-        Program.World.SpawnAnimals(animalCount, 350, 650);
+        Program.World.SpawnAnimals(animalCount, 1000F - posOffset, 1000F + posOffset, chaos);
         Program.ReignitionCount += 1;
 
         return Ok(new { message = "Life reignited" });

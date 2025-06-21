@@ -127,9 +127,21 @@ public class Animal : Entity
         StateMachine = new AnimalStateMachine(this);
     }
 
-    public Animal(Vector2 position) : this(position, 8F, Color.CornflowerBlue, 16F)
+    public static Animal CreateWithChaos(Vector2 position, float chaos = 0f)
     {
-        Lifespan = 24F + RandomUtils.RNG.NextSingle() * 16F + 2F;
+        var size = RandomUtils.RNG.GenerateChaosFloat(8F, chaos, 1F, 2F);
+        var speed = RandomUtils.RNG.GenerateChaosFloat(16F, chaos);
+
+        var predationInclination = RandomUtils.RNG.NextSingle() * chaos;
+        var maxHealth = RandomUtils.RNG.GenerateChaosFloat(20F, chaos, 0.25F, 1.5F);
+        var lifespan = RandomUtils.RNG.GenerateChaosFloat(40F, chaos, 0.25F, 1.5F);
+
+        return new Animal(position, size, Color.CornflowerBlue, speed)
+        {
+            PredationInclination = predationInclination,
+            MaxHealth = maxHealth,
+            Lifespan = lifespan
+        };
     }
 
     public override void Update(float deltaTime)
