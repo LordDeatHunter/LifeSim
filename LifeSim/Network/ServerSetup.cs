@@ -14,13 +14,6 @@ public static class ServerSetup
         builder.Services.AddHttpClient();
         builder.Services.AddDataProtection().SetApplicationName("LifeSim");
         builder.Services.AddDistributedMemoryCache();
-        builder.Services.AddSession(options =>
-        {
-            options.Cookie.HttpOnly = true;
-            options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-            options.IdleTimeout = TimeSpan.FromDays(365);
-            options.Cookie.IsEssential = true;
-        });
         builder.Services.AddScoped<LifeSimApi>();
         builder.Services.AddDbContext<ApplicationDbContext>(options =>
             options.UseSqlite("Data Source=lifesim.db;Cache=Shared;Mode=ReadWriteCreate",

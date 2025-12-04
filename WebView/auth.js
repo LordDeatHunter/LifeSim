@@ -94,6 +94,7 @@ const setAuthenticatedUser = (user) => {
   if (rightInfo) rightInfo.style.display = "flex";
 
   updateBalanceDisplay();
+  fetchUserBets();
 };
 
 const setUnauthenticated = () => {

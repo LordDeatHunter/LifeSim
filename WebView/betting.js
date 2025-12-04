@@ -156,12 +156,49 @@ const placeBet = async (betType) => {
 };
 
 const updateBalanceDisplay = () => {
+  if (!currentUser) {
+    return;
+  }
+
   getBalance()
     .then((response) => response.json())
     .then((data) => data.balance)
     .then(setBalanceDisplay)
     .catch((error) => {
       console.error("Error fetching balance:", error);
+    });
+};
+
+const fetchUserBets = () => {
+  if (!currentUser) {
+    return;
+  }
+
+  fetch(`${API_ENDPOINT}/bets`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+  })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error("Failed to fetch bets");
+      }
+      return response.json();
+    })
+    .then((data) => {
+      if (betStatusList) {
+        betStatusList.innerHTML = "";
+      }
+
+      data.forEach((item) => {
+        const betMsg = createBetStatusElement(item);
+        betStatusList.insertBefore(betMsg, betStatusList.firstChild);
+      });
+    })
+    .catch((error) => {
+      console.error("Error fetching bets:", error);
     });
 };
 
@@ -210,7 +247,6 @@ document.addEventListener("DOMContentLoaded", () => {
     betAmountInput.value = "1";
   };
 
-  updateBalanceDisplay();
   createLeaderboards();
   setInterval(createLeaderboards, 3 * 60 * 1000);
 
@@ -221,23 +257,4 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("bet-decrease").onclick = () => {
     placeBet("decrease");
   };
-
-  fetch(`${API_ENDPOINT}/bets`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    credentials: "include",
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      data.forEach((item) => {
-        const betMsg = createBetStatusElement(item);
-
-        betStatusList.insertBefore(betMsg, betStatusList.firstChild);
-      });
-    })
-    .catch((error) => {
-      console.error("Error fetching bets:", error);
-    });
 });
