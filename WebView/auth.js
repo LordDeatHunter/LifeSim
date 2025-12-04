@@ -89,7 +89,9 @@ const setAuthenticatedUser = (user) => {
   }
 
   const bettingMenu = document.getElementById("betting-menu");
+  const rightInfo = document.getElementById("right-info");
   if (bettingMenu) bettingMenu.style.display = "block";
+  if (rightInfo) rightInfo.style.display = "flex";
 
   updateBalanceDisplay();
 };
@@ -99,11 +101,11 @@ const setUnauthenticated = () => {
   loginPanel.style.display = "block";
   userPanel.style.display = "none";
 
-  // Hide betting features
-  const bettingMenu = document.getElementById("betting-menu");
+ const bettingMenu = document.getElementById("betting-menu");
+  const rightInfo = document.getElementById("right-info");
   if (bettingMenu) bettingMenu.style.display = "none";
+  if (rightInfo) rightInfo.style.display = "none";
 };
-
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", initAuth);
 } else {
