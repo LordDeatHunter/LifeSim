@@ -5,6 +5,7 @@
     <meta charset="UTF-8" />
     <script src="script.js"></script>
     <script src="utils.js"></script>
+    <script src="auth.js"></script>
     <script src="elements.js"></script>
     <script src="betting.js"></script>
     <script src="canvas.js"></script>
@@ -20,6 +21,21 @@
   </head>
   <body>
     <div class="main-container">
+      <div id="auth-section" class="auth-section">
+        <div id="login-panel" class="auth-panel" style="display: none;">
+          <h3>Sign in to LifeSim</h3>
+          <button id="discord-login-button" class="discord-button">
+            <span class="pixel--discord"></span> Login with Discord
+          </button>
+        </div>
+        <div id="user-panel" class="auth-panel" style="display: none;">
+          <div id="user-info">
+            <img id="user-avatar" src="" alt="Avatar" style="display: none;" />
+            <span id="user-name"></span>
+          </div>
+          <button id="logout-button">Logout</button>
+        </div>
+      </div>
       <h1 id="elapsed-time-display">Elapsed time: 0s</h1>
       <div class="viewer-count">
         <span class="pixel--user-solid"></span>
@@ -42,7 +58,7 @@
               Omnivores: 0
             </h3>
           </div>
-          <div id="right-info">
+          <div id="right-info" style="display: none;">
             <h2>Actions:</h2>
             <h3 id="reignition-counter">Reignition count: 0</h3>
             <div class="slider-container">
@@ -61,7 +77,7 @@
           </div>
         </div>
       </div>
-      <div id="betting-menu" class="betting-box">
+      <div id="betting-menu" class="betting-box" style="display: none;">
         <h2>
           <span class="betting-icon">📈</span>Will the animal count change in
           the next 30s?
@@ -92,9 +108,6 @@
       </div>
       <div id="leaderboard">
         <h2>Leaderboard (auto-refresh every 3m)</h2>
-        <label for="name-input">Username: </label>
-        <input class="name-input" type="text" id="name-input" />
-        <button id="submit-name-button">Save</button>
         <h3>Top Balances</h3>
         <div id="balance-leaderboard" class="leaderboard-list"></div>
         <h3>Most Bets Won</h3>

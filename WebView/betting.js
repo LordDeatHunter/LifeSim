@@ -4,8 +4,6 @@ let betStatusDiv;
 let betStatusList;
 let balanceLeaderboardDiv;
 let betsLeaderboardDiv;
-let nameInput;
-let nameSubmitButton;
 let maxBetButton;
 let minBetButton;
 
@@ -158,12 +156,49 @@ const placeBet = async (betType) => {
 };
 
 const updateBalanceDisplay = () => {
+  if (!currentUser) {
+    return;
+  }
+
   getBalance()
     .then((response) => response.json())
     .then((data) => data.balance)
     .then(setBalanceDisplay)
     .catch((error) => {
       console.error("Error fetching balance:", error);
+    });
+};
+
+const fetchUserBets = () => {
+  if (!currentUser) {
+    return;
+  }
+
+  fetch(`${API_ENDPOINT}/bets`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+  })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error("Failed to fetch bets");
+      }
+      return response.json();
+    })
+    .then((data) => {
+      if (betStatusList) {
+        betStatusList.innerHTML = "";
+      }
+
+      data.forEach((item) => {
+        const betMsg = createBetStatusElement(item);
+        betStatusList.insertBefore(betMsg, betStatusList.firstChild);
+      });
+    })
+    .catch((error) => {
+      console.error("Error fetching bets:", error);
     });
 };
 
@@ -201,33 +236,6 @@ document.addEventListener("DOMContentLoaded", () => {
   betStatusList = document.getElementById("bet-status-list");
   balanceLeaderboardDiv = document.getElementById("balance-leaderboard");
   betsLeaderboardDiv = document.getElementById("bets-leaderboard");
-  nameInput = document.getElementById("name-input");
-  nameSubmitButton = document.getElementById("submit-name-button");
-
-  nameSubmitButton.onclick = () => {
-    const name = nameInput.value.trim().replaceAll(/\s+/g, " ");
-    if (!name || name.length < 3 || name.length > 20) {
-      alert("Please enter a username between 3 and 20 characters.");
-      return;
-    }
-    fetch(`${API_ENDPOINT}/set-name`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ name }),
-      credentials: "include",
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Failed to set name.");
-        }
-        createLeaderboards();
-      })
-      .catch((error) => {
-        console.error("Error setting name:", error);
-      });
-  };
 
   maxBetButton = document.getElementById("max-bet-button");
   maxBetButton.onclick = () => {
@@ -239,7 +247,6 @@ document.addEventListener("DOMContentLoaded", () => {
     betAmountInput.value = "1";
   };
 
-  updateBalanceDisplay();
   createLeaderboards();
   setInterval(createLeaderboards, 3 * 60 * 1000);
 
@@ -250,23 +257,4 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("bet-decrease").onclick = () => {
     placeBet("decrease");
   };
-
-  fetch(`${API_ENDPOINT}/bets`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    credentials: "include",
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      data.forEach((item) => {
-        const betMsg = createBetStatusElement(item);
-
-        betStatusList.insertBefore(betMsg, betStatusList.firstChild);
-      });
-    })
-    .catch((error) => {
-      console.error("Error fetching bets:", error);
-    });
 });

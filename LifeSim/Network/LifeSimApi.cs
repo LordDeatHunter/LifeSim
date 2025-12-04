@@ -39,7 +39,7 @@ public class LifeSimApi
                     user.Balance = 100;
                 }
 
-                if (brokeUsers.Count != 0) await db.SaveChangesAsync();
+                if (brokeUsers.Count != 0) await db.SaveChangesWithRetryAsync();
 
                 await Task.Delay(TimeSpan.FromMinutes(30));
             }
@@ -63,7 +63,13 @@ public class LifeSimApi
 
                 foreach (var bet in expiredPendingBets)
                 {
-                    var user = await db.GetOrCreateUserAsync(bet.ClientId);
+                    var user = await db.GetUserAsync(bet.DiscordId);
+
+                    if (user == null)
+                    {
+                        bet.Status = nameof(BetStatus.Expired);
+                        continue;
+                    }
 
                     if (finalCount == bet.InitialCount)
                     {
@@ -85,7 +91,7 @@ public class LifeSimApi
                     user.Balance += bet.Amount * 2;
                 }
 
-                if (expiredPendingBets.Count != 0) await db.SaveChangesAsync();
+                if (expiredPendingBets.Count != 0) await db.SaveChangesWithRetryAsync();
 
                 await Task.Delay(1000);
             }
@@ -103,10 +109,10 @@ public class LifeSimApi
 
         var topBets = await db.Bets
             .Where(b => b.Status == nameof(BetStatus.Won))
-            .GroupBy(b => b.ClientId)
+            .GroupBy(b => b.DiscordId)
             .Select(g => new
             {
-                ClientId = g.Key,
+                DiscordId = g.Key,
                 BetCount = g.Count(),
                 Score = g.Sum(b => (long)b.Amount)
             })
@@ -114,8 +120,8 @@ public class LifeSimApi
             .Take(10)
             .Join(
                 db.Users,
-                bet => bet.ClientId,
-                user => user.ClientId,
+                bet => bet.DiscordId,
+                user => user.DiscordId,
                 (bet, user) => new
                 {
                     user.Name,
@@ -147,7 +153,10 @@ public class LifeSimApi
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-        var user = await db.GetOrCreateUserAsync(clientId);
+        var user = await db.GetUserAsync(clientId);
+        if (user == null)
+            throw new InvalidOperationException("User not found. Please authenticate with Discord first.");
+
         user.Balance -= amount;
 
         var bet = await db.PlaceBetAsync(
@@ -158,7 +167,7 @@ public class LifeSimApi
             DateTime.UtcNow.AddSeconds(30)
         );
 
-        await db.SaveChangesAsync();
+        await db.SaveChangesWithRetryAsync();
 
         return bet;
     }
@@ -169,16 +178,16 @@ public class LifeSimApi
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
         return await db.Bets
-            .Where(bet => bet.ClientId == clientId)
+            .Where(bet => bet.DiscordId == clientId)
             .OrderBy(bet => bet.ExpiresAt)
             .ToListAsync();
     }
 
-    public async Task<User> GetOrCreateUserAsync(string clientId, ulong initialBalance = 100)
+    public async Task<User?> GetUserAsync(string discordId)
     {
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        return await db.GetOrCreateUserAsync(clientId, initialBalance);
+        return await db.GetUserAsync(discordId);
     }
 
     public async Task<Bet?> GetBetByIdAsync(Guid id)
@@ -188,30 +197,18 @@ public class LifeSimApi
         return await db.Bets.FindAsync(id);
     }
 
-    public async Task<bool> IsNameTakenAsync(string name)
-    {
-        using var scope = _scopeFactory.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        return await db.Users.AnyAsync(u => u.Name == name);
-    }
-
-    public async Task UpdateUserAsync(User user)
-    {
-        using var scope = _scopeFactory.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        db.Users.Update(user);
-        await db.SaveChangesAsync();
-    }
-    
     public async Task AddBalanceAsync(string clientId, long amount)
     {
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var user = await db.GetOrCreateUserAsync(clientId);
+        var user = await db.GetUserAsync(clientId);
+
+        if (user == null)
+            throw new InvalidOperationException("User not found. Please authenticate with Discord first.");
 
         var newBalance = (long)user.Balance + amount;
         user.Balance = (ulong)Math.Max(0, newBalance);
-        
-        await db.SaveChangesAsync();
+
+        await db.SaveChangesWithRetryAsync();
     }
 }

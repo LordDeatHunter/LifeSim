@@ -1,4 +1,5 @@
 using System.Runtime.Loader;
+using DotNetEnv;
 using LifeSim.Data;
 using LifeSim.Network;
 using LifeSim.World;
@@ -14,6 +15,8 @@ public static class Program
 
     public static async Task Main(string[] args)
     {
+        Env.Load();
+
         SocketLogic socketLogic = new();
         var builder = ServerSetup.ConfigureServices(args);
         var app = builder.Build();
@@ -24,10 +27,30 @@ public static class Program
         {
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             await db.Database.MigrateAsync();
+
+            await db.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL;");
+            await db.Database.ExecuteSqlRawAsync("PRAGMA busy_timeout=5000;");
         }
 
+        await Task.Delay(100);
+
         World = app.Services.GetRequiredService<WorldStorage>();
-        await World.LoadWorldAsync(app.Services);
+
+        var retryCount = 0;
+        while (retryCount < 3)
+        {
+            try
+            {
+                await World.LoadWorldAsync(app.Services);
+                break;
+            }
+            catch (Exception ex) when (retryCount < 2)
+            {
+                Console.WriteLine($"Failed to load world (attempt {retryCount + 1}/3): {ex.Message}");
+                retryCount++;
+                await Task.Delay(500 * retryCount);
+            }
+        }
 
         Console.CancelKeyPress += (_, e) =>
         {

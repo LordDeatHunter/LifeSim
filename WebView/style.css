@@ -327,6 +327,69 @@ input {
   flex: 1;
 }
 
+/* Authentication section styles */
+.auth-section {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+}
+
+.auth-panel {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background-color: #1e1e1e;
+  border: 2px solid #cecece;
+  border-radius: 12px;
+  padding: 12px 16px;
+}
+
+.discord-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #5865f2;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-weight: bold;
+  transition: background-color 0.2s;
+}
+
+.discord-button:hover {
+  background-color: #4752c4;
+  color: white;
+}
+
+#user-panel {
+  flex-direction: row;
+  align-items: center;
+}
+
+#user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid #cecece;
+}
+
+#user-name {
+  font-weight: bold;
+  color: #cecece;
+}
+
+#logout-button {
+  padding: 6px 12px;
+  font-size: 14px;
+}
+
 @media (prefers-color-scheme: light) {
   body {
     background-color: #f0f0f0;
@@ -389,5 +452,27 @@ input {
 
   .leaderboard-score {
     color: #bb8700;
+  }
+
+  .auth-panel {
+    background-color: #f0f0f0;
+    border: 2px solid #161616;
+  }
+
+  #user-name {
+    color: #161616;
+  }
+
+  #user-avatar {
+    border: 2px solid #161616;
+  }
+}
+
+@media (max-width: 768px) {
+  .auth-section {
+    position: relative;
+    top: 0;
+    right: 0;
+    margin-bottom: 20px;
   }
 }

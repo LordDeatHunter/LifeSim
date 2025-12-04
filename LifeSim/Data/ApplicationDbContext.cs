@@ -16,6 +16,12 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> opts) :
     {
         base.OnModelCreating(modelBuilder);
 
+        modelBuilder.Entity<User>()
+            .HasMany(u => u.Bets)
+            .WithOne()
+            .HasForeignKey(b => b.DiscordId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         modelBuilder.Entity<Bet>()
             .Property(b => b.ExpiresAt)
             .HasConversion(

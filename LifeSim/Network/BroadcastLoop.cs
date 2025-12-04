@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
@@ -19,22 +20,36 @@ public class BroadcastLoop(SocketLogic socketLogic, WorldStorage world)
         {
             var activeClients = socketLogic.Clients.Keys.Where(c => c.State == WebSocketState.Open).ToList();
 
-            var currentAnimals = world.GetAnimalDtos().ToDictionary();
-            var currentFoods = world.GetFoodDtos().ToDictionary();
+            var currentAnimals = world.GetAnimalDtos();
+            var currentFoods = world.GetFoodDtos();
 
-            var addedAnimals = currentAnimals.Keys.Except(previousAnimals.Keys)
-                .ToDictionary(id => id, id => currentAnimals[id]);
-            var addedFoods = currentFoods.Keys.Except(previousFoods.Keys)
-                .ToDictionary(id => id, id => currentFoods[id]);
+            var addedAnimals = new Dictionary<string, AnimalDto>();
+            foreach (var kvp in currentAnimals)
+            {
+                if (!previousAnimals.ContainsKey(kvp.Key))
+                    addedAnimals[kvp.Key] = kvp.Value;
+            }
 
-            var removedAnimals = previousAnimals.Keys.Except(currentAnimals.Keys).ToList();
-            var removedFoods = previousFoods.Keys.Except(currentFoods.Keys).ToList();
+            var addedFoods = new Dictionary<string, FoodDto>();
+            foreach (var kvp in currentFoods)
+            {
+                if (!previousFoods.ContainsKey(kvp.Key))
+                    addedFoods[kvp.Key] = kvp.Value;
+            }
+
+            var removedAnimals = previousAnimals.Keys.Where(key => !currentAnimals.ContainsKey(key)).ToList();
+            var removedFoods = previousFoods.Keys.Where(key => !currentFoods.ContainsKey(key)).ToList();
 
             var updatedAnimals = ComputeDiffs(currentAnimals, previousAnimals);
             var updatedFoods = ComputeDiffs(currentFoods, previousFoods);
 
-            previousAnimals = currentAnimals.ToDictionary();
-            previousFoods = currentFoods.ToDictionary();
+            previousAnimals.Clear();
+            foreach (var kvp in currentAnimals)
+                previousAnimals[kvp.Key] = kvp.Value;
+
+            previousFoods.Clear();
+            foreach (var kvp in currentFoods)
+                previousFoods[kvp.Key] = kvp.Value;
 
             var payload = new
             {
@@ -76,16 +91,19 @@ public class BroadcastLoop(SocketLogic socketLogic, WorldStorage world)
     }
 
     private static Dictionary<string, Dictionary<string, object>> ComputeDiffs<T>(
-        Dictionary<string, T> current,
+        ConcurrentDictionary<string, T> current,
         Dictionary<string, T> previous
     ) where T : IEntityDto
     {
         var diffs = new Dictionary<string, Dictionary<string, object>>();
 
-        foreach (var id in current.Keys.Intersect(previous.Keys))
+        foreach (var kvp in current)
         {
-            var old = previous[id];
-            var curr = current[id];
+            var id = kvp.Key;
+            if (!previous.TryGetValue(id, out var old))
+                continue;
+
+            var curr = kvp.Value;
 
             var diff = new Dictionary<string, object>();
             if (!curr.Equals(old))
