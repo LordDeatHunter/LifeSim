@@ -109,8 +109,8 @@ let createConnection = () => {
         ? `${activeClients} viewer`
         : `${activeClients} viewers`;
 
-    entityCategoryDisplays[0].innerText = `Animals: ${animalCount}\n${animalPercent}% `;
-    entityCategoryDisplays[1].innerText = `Food: ${foodCount}\n${foodPercent}%`;
+    entityCategoryDisplays[0].innerText = `Food: ${foodCount}\n${foodPercent}%`;
+    entityCategoryDisplays[1].innerText = `Animals: ${animalCount}\n${animalPercent}% `;
 
     animalFoodTypeDisplays[0].innerText = `Herbivores: ${animalCounts["HERBIVORE"]}\n${animalCountsPercentage["HERBIVORE"]}%`;
     animalFoodTypeDisplays[1].innerText = `Carnivores: ${animalCounts["CARNIVORE"]}\n${animalCountsPercentage["CARNIVORE"]}%`;
