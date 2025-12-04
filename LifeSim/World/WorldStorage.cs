@@ -128,7 +128,7 @@ public class WorldStorage
 
         try
         {
-            await db.SaveChangesAsync();
+            await db.SaveChangesWithRetryAsync();
             await tx.CommitAsync();
         }
         catch (DbUpdateException ex)
@@ -157,7 +157,7 @@ public class WorldStorage
         await db.Foods.ExecuteDeleteAsync();
         await db.Animals.ExecuteDeleteAsync();
 
-        await db.SaveChangesAsync();
+        await db.SaveChangesWithRetryAsync();
         
         foods.Select(FoodEntity.FromDomain).ToList().ForEach(EnqueueFoodAddition);
         animals.Select(AnimalEntity.FromDomain).ToList().ForEach(EnqueueAnimalAddition);

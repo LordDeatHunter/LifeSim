@@ -24,6 +24,9 @@ public static class Program
         {
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             await db.Database.MigrateAsync();
+
+            await db.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL;");
+            await db.Database.ExecuteSqlRawAsync("PRAGMA busy_timeout=5000;");
         }
 
         World = app.Services.GetRequiredService<WorldStorage>();

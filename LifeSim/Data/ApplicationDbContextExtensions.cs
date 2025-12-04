@@ -1,10 +1,34 @@
 ﻿using LifeSim.Data.Models;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
 namespace LifeSim.Data;
 
 public static class ApplicationDbContextExtensions
 {
+    private const int MaxRetries = 5;
+    private const int RetryDelayMs = 100;
+
+    public static async Task SaveChangesWithRetryAsync(this ApplicationDbContext db,
+        CancellationToken cancellationToken = default)
+    {
+        for (var i = 0; i < MaxRetries; i++)
+        {
+            try
+            {
+                await db.SaveChangesAsync(cancellationToken);
+                return;
+            }
+            catch (DbUpdateException ex) when (ex.InnerException is SqliteException { SqliteErrorCode: 5 or 6 }) // 5 = locked, 6 = busy
+            {
+                if (i == MaxRetries - 1)
+                    throw;
+
+                await Task.Delay(RetryDelayMs * (i + 1), cancellationToken);
+            }
+        }
+    }
+
     public static async Task<User> GetOrCreateUserAsync(this ApplicationDbContext db, string clientId, ulong initialBalance = 100)
     {
         var user = await db.Users.FindAsync(clientId);
@@ -18,7 +42,7 @@ public static class ApplicationDbContextExtensions
         };
         db.Users.Add(user);
 
-        await db.SaveChangesAsync();
+        await db.SaveChangesWithRetryAsync();
 
         return user;
     }

@@ -22,7 +22,11 @@ public static class ServerSetup
         });
         builder.Services.AddScoped<LifeSimApi>();
         builder.Services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseSqlite("Data Source=lifesim.db")
+            options.UseSqlite("Data Source=lifesim.db;Cache=Shared;Mode=ReadWriteCreate",
+                sqliteOptions =>
+                {
+                    sqliteOptions.CommandTimeout(60);
+                })
         );
         builder.Services.AddSingleton<WorldStorage>();
 

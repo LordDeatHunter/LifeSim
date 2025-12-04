@@ -39,7 +39,7 @@ public class LifeSimApi
                     user.Balance = 100;
                 }
 
-                if (brokeUsers.Count != 0) await db.SaveChangesAsync();
+                if (brokeUsers.Count != 0) await db.SaveChangesWithRetryAsync();
 
                 await Task.Delay(TimeSpan.FromMinutes(30));
             }
@@ -85,7 +85,7 @@ public class LifeSimApi
                     user.Balance += bet.Amount * 2;
                 }
 
-                if (expiredPendingBets.Count != 0) await db.SaveChangesAsync();
+                if (expiredPendingBets.Count != 0) await db.SaveChangesWithRetryAsync();
 
                 await Task.Delay(1000);
             }
@@ -158,7 +158,7 @@ public class LifeSimApi
             DateTime.UtcNow.AddSeconds(30)
         );
 
-        await db.SaveChangesAsync();
+        await db.SaveChangesWithRetryAsync();
 
         return bet;
     }
@@ -200,7 +200,7 @@ public class LifeSimApi
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         db.Users.Update(user);
-        await db.SaveChangesAsync();
+        await db.SaveChangesWithRetryAsync();
     }
     
     public async Task AddBalanceAsync(string clientId, long amount)
@@ -212,6 +212,6 @@ public class LifeSimApi
         var newBalance = (long)user.Balance + amount;
         user.Balance = (ulong)Math.Max(0, newBalance);
         
-        await db.SaveChangesAsync();
+        await db.SaveChangesWithRetryAsync();
     }
 }
