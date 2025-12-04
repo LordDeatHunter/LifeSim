@@ -36,8 +36,7 @@ public static class ServerSetup
 
         app.Use(async (context, next) =>
         {
-            var protector = builder.Services
-                .BuildServiceProvider()
+            var protector = context.RequestServices
                 .GetRequiredService<IDataProtectionProvider>()
                 .CreateProtector("ClientId");
 
@@ -57,6 +56,8 @@ public static class ServerSetup
                     }
                 );
                 context.Session.SetString("clientId", rawId);
+
+                context.Items["clientId"] = rawId;
             }
 
             await next();
