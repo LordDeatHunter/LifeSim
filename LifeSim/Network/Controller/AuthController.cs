@@ -27,7 +27,8 @@ public class AuthController(IConfiguration configuration, ApplicationDbContext d
                       $"client_id={clientId}" +
                       $"&redirect_uri={Uri.EscapeDataString(redirectUri)}" +
                       $"&response_type=code" +
-                      $"&scope=identify";
+                      $"&scope=identify" +
+                      $"&prompt=none";
 
         return Ok(new { url = authUrl });
     }
