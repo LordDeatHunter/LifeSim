@@ -151,14 +151,26 @@ public class WorldStorage
         using var scope = services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-        var foods = await db.Foods.AsNoTracking().ToListAsync();
-        var animals = await db.Animals.AsNoTracking().ToListAsync();
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
 
-        await db.Foods.ExecuteDeleteAsync();
-        await db.Animals.ExecuteDeleteAsync();
+        var foods = await db.Foods.AsNoTracking().ToListAsync(cts.Token);
+        var animals = await db.Animals.AsNoTracking().ToListAsync(cts.Token);
 
-        await db.SaveChangesWithRetryAsync();
-        
+        await using var transaction = await db.Database.BeginTransactionAsync(cts.Token);
+        try
+        {
+            await db.Foods.ExecuteDeleteAsync(cts.Token);
+            await db.Animals.ExecuteDeleteAsync(cts.Token);
+
+            await db.SaveChangesWithRetryAsync(cts.Token);
+            await transaction.CommitAsync(cts.Token);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cts.Token);
+            throw;
+        }
+    
         foods.Select(FoodEntity.FromDomain).ToList().ForEach(EnqueueFoodAddition);
         animals.Select(AnimalEntity.FromDomain).ToList().ForEach(EnqueueAnimalAddition);
     }

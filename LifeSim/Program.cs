@@ -29,8 +29,25 @@ public static class Program
             await db.Database.ExecuteSqlRawAsync("PRAGMA busy_timeout=5000;");
         }
 
+        await Task.Delay(100);
+
         World = app.Services.GetRequiredService<WorldStorage>();
-        await World.LoadWorldAsync(app.Services);
+
+        var retryCount = 0;
+        while (retryCount < 3)
+        {
+            try
+            {
+                await World.LoadWorldAsync(app.Services);
+                break;
+            }
+            catch (Exception ex) when (retryCount < 2)
+            {
+                Console.WriteLine($"Failed to load world (attempt {retryCount + 1}/3): {ex.Message}");
+                retryCount++;
+                await Task.Delay(500 * retryCount);
+            }
+        }
 
         Console.CancelKeyPress += (_, e) =>
         {
