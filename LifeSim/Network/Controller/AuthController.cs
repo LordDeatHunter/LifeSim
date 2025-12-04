@@ -17,8 +17,8 @@ public class AuthController(IConfiguration configuration, ApplicationDbContext d
     [HttpGet("discord")]
     public IActionResult DiscordLogin()
     {
-        var clientId = configuration["Discord:ClientId"];
-        var redirectUri = configuration["Discord:RedirectUri"];
+        var clientId = Environment.GetEnvironmentVariable("DISCORD_CLIENT_ID");
+        var redirectUri = Environment.GetEnvironmentVariable("DISCORD_REDIRECT_URI");
 
         if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(redirectUri))
             return BadRequest(new { message = "Discord OAuth is not configured" });
@@ -38,9 +38,9 @@ public class AuthController(IConfiguration configuration, ApplicationDbContext d
         if (string.IsNullOrEmpty(code))
             return BadRequest(new { message = "Authorization code is required" });
 
-        var clientId = configuration["Discord:ClientId"];
-        var clientSecret = configuration["Discord:ClientSecret"];
-        var redirectUri = configuration["Discord:RedirectUri"];
+        var clientId = Environment.GetEnvironmentVariable("DISCORD_CLIENT_ID");
+        var clientSecret = Environment.GetEnvironmentVariable("DISCORD_CLIENT_SECRET");
+        var redirectUri = Environment.GetEnvironmentVariable("DISCORD_REDIRECT_URI");
 
         if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(clientSecret) || string.IsNullOrEmpty(redirectUri))
             return BadRequest(new { message = "Discord OAuth is not configured" });

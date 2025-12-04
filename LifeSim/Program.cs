@@ -1,4 +1,5 @@
 using System.Runtime.Loader;
+using DotNetEnv;
 using LifeSim.Data;
 using LifeSim.Network;
 using LifeSim.World;
@@ -14,6 +15,8 @@ public static class Program
 
     public static async Task Main(string[] args)
     {
+        Env.Load();
+
         SocketLogic socketLogic = new();
         var builder = ServerSetup.ConfigureServices(args);
         var app = builder.Build();
