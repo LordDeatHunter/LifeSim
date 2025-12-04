@@ -3,7 +3,7 @@
 2. TBD
 
 # Running
-To run the fronted (any web server will work, for example python http server)
+To run the frontend (any web server will work, for example python http server)
 ```bash
 cd .\WebView\
 python -m http.server 80
