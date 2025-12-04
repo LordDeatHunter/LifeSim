@@ -295,7 +295,3 @@ __pycache__/
 *.db
 *.db-shm
 *.db-wal
-
-# Configs
-./appsettings.json
-./appsettings.Development.json
