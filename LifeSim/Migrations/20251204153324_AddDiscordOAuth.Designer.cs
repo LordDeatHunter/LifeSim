@@ -3,6 +3,7 @@ using System;
 using LifeSim.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LifeSim.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251204153324_AddDiscordOAuth")]
+    partial class AddDiscordOAuth
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.6");
@@ -103,9 +106,12 @@ namespace LifeSim.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("UserDiscordId")
+                        .HasColumnType("TEXT");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("DiscordId");
+                    b.HasIndex("UserDiscordId");
 
                     b.ToTable("Bets");
                 });
@@ -180,9 +186,7 @@ namespace LifeSim.Migrations
                 {
                     b.HasOne("LifeSim.Data.Models.User", null)
                         .WithMany("Bets")
-                        .HasForeignKey("DiscordId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("UserDiscordId");
                 });
 
             modelBuilder.Entity("LifeSim.Data.Models.User", b =>

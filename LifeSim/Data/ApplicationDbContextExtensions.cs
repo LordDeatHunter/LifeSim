@@ -29,27 +29,11 @@ public static class ApplicationDbContextExtensions
         }
     }
 
-    public static async Task<User> GetOrCreateUserAsync(this ApplicationDbContext db, string clientId, ulong initialBalance = 100)
-    {
-        var user = await db.Users.FindAsync(clientId);
-        if (user != null) return user;
-
-        user = new User
-        {
-            ClientId = clientId,
-            Name     = clientId,
-            Balance  = initialBalance
-        };
-        db.Users.Add(user);
-
-        await db.SaveChangesWithRetryAsync();
-
-        return user;
-    }
+    public static async Task<User?> GetUserAsync(this ApplicationDbContext db, string discordId) => await db.Users.FindAsync(discordId);
 
     public static async Task<Bet> PlaceBetAsync(
         this ApplicationDbContext db,
-        string clientId,
+        string discordId,
         ulong amount,
         string betType,
         int initialCount,
@@ -59,7 +43,7 @@ public static class ApplicationDbContextExtensions
         var bet = new Bet
         {
             Id = Guid.NewGuid(),
-            ClientId = clientId,
+            DiscordId = discordId,
             Amount = amount,
             BetType = betType,
             InitialCount = initialCount,
@@ -72,7 +56,7 @@ public static class ApplicationDbContextExtensions
 
     public static IQueryable<Bet> PendingBets(this ApplicationDbContext db) =>
         db.Bets.Where(b => b.Status == "Pending");
-    
+
     public static Task<List<Bet>> ExpiredPendingBetsAsync(this ApplicationDbContext db)
     {
         var now = DateTime.UtcNow;

@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.DataProtection;
-
-namespace LifeSim.Network;
+﻿namespace LifeSim.Network;
 
 public static class ClientId
 {
@@ -9,20 +7,10 @@ public static class ClientId
         if (context.Items.TryGetValue("clientId", out var clientIdObj) && clientIdObj is string clientId)
             return clientId;
 
-        var protector = context.RequestServices
-            .GetRequiredService<IDataProtectionProvider>()
-            .CreateProtector("ClientId");
+        if (!context.Request.Cookies.TryGetValue("auth_token", out var authToken) ||
+            string.IsNullOrEmpty(authToken)) return null;
 
-        if (!context.Request.Cookies.TryGetValue("clientId", out var protectedClientId))
-            return null;
-
-        try
-        {
-            return protector.Unprotect(protectedClientId);
-        }
-        catch
-        {
-            return null;
-        }
+        context.Items["clientId"] = authToken;
+        return authToken;
     }
 }

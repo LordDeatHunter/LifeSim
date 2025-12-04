@@ -11,6 +11,7 @@ public static class ServerSetup
     {
         var builder = WebApplication.CreateBuilder(args);
         builder.Services.AddControllers();
+        builder.Services.AddHttpClient();
         builder.Services.AddDataProtection().SetApplicationName("LifeSim");
         builder.Services.AddDistributedMemoryCache();
         builder.Services.AddSession(options =>
@@ -35,36 +36,6 @@ public static class ServerSetup
 
     public static void ConfigureMiddleware(WebApplication app, WebApplicationBuilder builder)
     {
-        app.UseSession();
         app.UseWebSockets();
-
-        app.Use(async (context, next) =>
-        {
-            var protector = context.RequestServices
-                .GetRequiredService<IDataProtectionProvider>()
-                .CreateProtector("ClientId");
-
-            if (!context.Request.Cookies.ContainsKey("clientId"))
-            {
-                var rawId = Guid.NewGuid().ToString();
-                var protectedId = protector.Protect(rawId);
-                context.Response.Cookies.Append(
-                    "clientId",
-                    protectedId,
-                    new CookieOptions
-                    {
-                        HttpOnly = true,
-                        Secure = true,
-                        SameSite = SameSiteMode.Strict,
-                        Expires = DateTimeOffset.UtcNow.AddYears(1)
-                    }
-                );
-                context.Session.SetString("clientId", rawId);
-
-                context.Items["clientId"] = rawId;
-            }
-
-            await next();
-        });
     }
 }

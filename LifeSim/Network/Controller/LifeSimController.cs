@@ -23,7 +23,10 @@ public class LifeSimController(LifeSimApi api) : ControllerBase
         var chaos = float.Clamp(request.Chaos ?? 0F, 0F, 1F);
         var reignitionCost = (long)(25F + 975F * chaos);
 
-        var user = api.GetOrCreateUserAsync(clientId).Result;
+        var user = await api.GetUserAsync(clientId);
+        if (user == null)
+            return Unauthorized(new { message = "User not found. Please authenticate with Discord first." });
+
         if (user.Balance < (ulong)reignitionCost)
             return BadRequest(new { message = "Insufficient balance to reignite life", required = reignitionCost, balance = user.Balance });
 
@@ -45,7 +48,9 @@ public class LifeSimController(LifeSimApi api) : ControllerBase
         if (string.IsNullOrEmpty(clientId))
             return BadRequest(new { message = ClientIdMissingMessage });
 
-        var user = await api.GetOrCreateUserAsync(clientId);
+        var user = await api.GetUserAsync(clientId);
+        if (user == null)
+            return Unauthorized(new { message = "User not found. Please authenticate with Discord first." });
 
         return Ok(new { balance = user.Balance });
     }
@@ -58,7 +63,9 @@ public class LifeSimController(LifeSimApi api) : ControllerBase
             return BadRequest(new { message = ClientIdMissingMessage });
 
         var amount = betRequest.Amount;
-        var user = await api.GetOrCreateUserAsync(clientId);
+        var user = await api.GetUserAsync(clientId);
+        if (user == null)
+            return Unauthorized(new { message = "User not found. Please authenticate with Discord first." });
 
         if (amount < 1)
             return BadRequest(new { message = "Bet amount must be greater than zero" });
@@ -71,7 +78,9 @@ public class LifeSimController(LifeSimApi api) : ControllerBase
             return BadRequest(new { message = "Invalid bet type. Use 'increase' or 'decrease'" });
 
         var bet = await api.PlaceBetAsync(clientId, amount, betType);
-        user = await api.GetOrCreateUserAsync(clientId);
+        user = await api.GetUserAsync(clientId);
+        if (user == null)
+            return Unauthorized(new { message = "User not found. Please authenticate with Discord first." });
 
         return Ok(new
         {
@@ -107,7 +116,7 @@ public class LifeSimController(LifeSimApi api) : ControllerBase
             return BadRequest(new { message = ClientIdMissingMessage });
 
         var bet = await api.GetBetByIdAsync(id);
-        if (bet == null || bet.ClientId != clientId)
+        if (bet == null || bet.DiscordId != clientId)
             return NotFound(new { message = "Bet not found" });
 
         return Ok(bet);
@@ -117,37 +126,5 @@ public class LifeSimController(LifeSimApi api) : ControllerBase
     public async Task<IActionResult> GetLeaderboards()
     {
         return Ok(await api.GetLeaderboardsAsync());
-    }
-
-    [HttpPost("set-name")]
-    public async Task<IActionResult> SetName([FromBody] NameRequest nameRequest)
-    {
-        var clientId = ClientId.GetClientId(HttpContext);
-        if (string.IsNullOrEmpty(clientId))
-            return BadRequest(new { message = ClientIdMissingMessage });
-
-        if (string.IsNullOrWhiteSpace(nameRequest.Name))
-            return BadRequest(new { message = "Name cannot be empty" });
-
-        var name = nameRequest.Name.Trim().Replace(" ", "_");
-
-        var originalNameLength = name.Length;
-        if (originalNameLength is < 3 or > 20)
-            return BadRequest(new { message = "Name must be between 3 and 20 characters" });
-
-        var user = await api.GetOrCreateUserAsync(clientId);
-        if (user.Name == name)
-            return NoContent();
-
-        
-        var originalName = name;
-        var index = 1;
-        while (await api.IsNameTakenAsync(name))
-            name = $"{originalName}_{index++}";
-        
-        user.Name = name;
-        await api.UpdateUserAsync(user);
-
-        return NoContent();
     }
 }

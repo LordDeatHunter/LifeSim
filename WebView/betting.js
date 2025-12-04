@@ -4,8 +4,6 @@ let betStatusDiv;
 let betStatusList;
 let balanceLeaderboardDiv;
 let betsLeaderboardDiv;
-let nameInput;
-let nameSubmitButton;
 let maxBetButton;
 let minBetButton;
 
@@ -201,33 +199,6 @@ document.addEventListener("DOMContentLoaded", () => {
   betStatusList = document.getElementById("bet-status-list");
   balanceLeaderboardDiv = document.getElementById("balance-leaderboard");
   betsLeaderboardDiv = document.getElementById("bets-leaderboard");
-  nameInput = document.getElementById("name-input");
-  nameSubmitButton = document.getElementById("submit-name-button");
-
-  nameSubmitButton.onclick = () => {
-    const name = nameInput.value.trim().replaceAll(/\s+/g, " ");
-    if (!name || name.length < 3 || name.length > 20) {
-      alert("Please enter a username between 3 and 20 characters.");
-      return;
-    }
-    fetch(`${API_ENDPOINT}/set-name`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ name }),
-      credentials: "include",
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Failed to set name.");
-        }
-        createLeaderboards();
-      })
-      .catch((error) => {
-        console.error("Error setting name:", error);
-      });
-  };
 
   maxBetButton = document.getElementById("max-bet-button");
   maxBetButton.onclick = () => {
