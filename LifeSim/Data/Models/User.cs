@@ -13,13 +13,6 @@ public class User
     public string? DiscordAvatar { get; set; }
 
     [Required]
-    public string DiscordAccessToken { get; set; } = null!;
-
-    public string? DiscordRefreshToken { get; set; }
-
-    public DateTime DiscordTokenExpiry { get; set; }
-
-    [Required, StringLength(20, MinimumLength = 3)]
     public string Name { get; set; } = null!;
 
     public ulong Balance { get; set; }

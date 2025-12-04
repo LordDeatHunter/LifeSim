@@ -20,9 +20,6 @@ namespace LifeSim.Migrations
                     DiscordId = table.Column<string>(type: "TEXT", nullable: false),
                     DiscordUsername = table.Column<string>(type: "TEXT", nullable: false),
                     DiscordAvatar = table.Column<string>(type: "TEXT", nullable: true),
-                    DiscordAccessToken = table.Column<string>(type: "TEXT", nullable: false),
-                    DiscordRefreshToken = table.Column<string>(type: "TEXT", nullable: true),
-                    DiscordTokenExpiry = table.Column<DateTime>(type: "TEXT", nullable: false),
                     Name = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
                     Balance = table.Column<ulong>(type: "INTEGER", nullable: false)
                 },
@@ -31,7 +28,6 @@ namespace LifeSim.Migrations
                     table.PrimaryKey("PK_Users", x => x.DiscordId);
                 });
 
-            // Recreate Bets table with DiscordId as foreign key
             migrationBuilder.CreateTable(
                 name: "Bets",
                 columns: table => new
@@ -64,13 +60,9 @@ namespace LifeSim.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            // Drop the Discord-based Bets table
             migrationBuilder.DropTable(name: "Bets");
-
-            // Drop the Discord-based Users table
             migrationBuilder.DropTable(name: "Users");
 
-            // Recreate the old Users table with ClientId
             migrationBuilder.CreateTable(
                 name: "Users",
                 columns: table => new
@@ -84,7 +76,6 @@ namespace LifeSim.Migrations
                     table.PrimaryKey("PK_Users", x => x.ClientId);
                 });
 
-            // Recreate old Bets table with ClientId
             migrationBuilder.CreateTable(
                 name: "Bets",
                 columns: table => new
@@ -115,4 +106,3 @@ namespace LifeSim.Migrations
         }
     }
 }
-

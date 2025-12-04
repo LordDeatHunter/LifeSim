@@ -15,7 +15,7 @@ namespace LifeSim.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "9.0.6");
+            modelBuilder.HasAnnotation("ProductVersion", "9.0.9");
 
             modelBuilder.Entity("LifeSim.Data.Models.AnimalEntity", b =>
                 {
@@ -149,17 +149,7 @@ namespace LifeSim.Migrations
                     b.Property<ulong>("Balance")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("DiscordAccessToken")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("DiscordAvatar")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("DiscordRefreshToken")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("DiscordTokenExpiry")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("DiscordUsername")
@@ -168,7 +158,6 @@ namespace LifeSim.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(20)
                         .HasColumnType("TEXT");
 
                     b.HasKey("DiscordId");

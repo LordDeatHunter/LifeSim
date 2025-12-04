@@ -86,13 +86,10 @@ public class AuthController(IConfiguration configuration, ApplicationDbContext d
                 user = new User
                 {
                     DiscordId = discordUser.id,
-                    DiscordUsername = discordUser.username ?? "User",
+                    DiscordUsername = discordUser.username,
                     DiscordAvatar = discordUser.avatar,
-                    DiscordAccessToken = tokenData.access_token,
-                    DiscordRefreshToken = tokenData.refresh_token,
-                    DiscordTokenExpiry = DateTime.UtcNow.AddSeconds(tokenData.expires_in),
-                    Name = discordUser.username ?? "User",
-                    Balance = 100 // Starting balance
+                    Name = discordUser.username,
+                    Balance = 100
                 };
 
                 db.Users.Add(user);
@@ -101,9 +98,6 @@ public class AuthController(IConfiguration configuration, ApplicationDbContext d
             {
                 user.DiscordUsername = discordUser.username;
                 user.DiscordAvatar = discordUser.avatar;
-                user.DiscordAccessToken = tokenData.access_token;
-                user.DiscordRefreshToken = tokenData.refresh_token;
-                user.DiscordTokenExpiry = DateTime.UtcNow.AddSeconds(tokenData.expires_in);
             }
 
             await db.SaveChangesAsync();

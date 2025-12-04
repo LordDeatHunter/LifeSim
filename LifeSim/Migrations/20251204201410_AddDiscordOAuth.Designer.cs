@@ -11,14 +11,14 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LifeSim.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251204153324_AddDiscordOAuth")]
+    [Migration("20251204201410_AddDiscordOAuth")]
     partial class AddDiscordOAuth
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "9.0.6");
+            modelBuilder.HasAnnotation("ProductVersion", "9.0.9");
 
             modelBuilder.Entity("LifeSim.Data.Models.AnimalEntity", b =>
                 {
@@ -106,12 +106,9 @@ namespace LifeSim.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("UserDiscordId")
-                        .HasColumnType("TEXT");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("UserDiscordId");
+                    b.HasIndex("DiscordId");
 
                     b.ToTable("Bets");
                 });
@@ -155,17 +152,7 @@ namespace LifeSim.Migrations
                     b.Property<ulong>("Balance")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("DiscordAccessToken")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("DiscordAvatar")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("DiscordRefreshToken")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("DiscordTokenExpiry")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("DiscordUsername")
@@ -174,7 +161,6 @@ namespace LifeSim.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(20)
                         .HasColumnType("TEXT");
 
                     b.HasKey("DiscordId");
@@ -186,7 +172,9 @@ namespace LifeSim.Migrations
                 {
                     b.HasOne("LifeSim.Data.Models.User", null)
                         .WithMany("Bets")
-                        .HasForeignKey("UserDiscordId");
+                        .HasForeignKey("DiscordId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("LifeSim.Data.Models.User", b =>
