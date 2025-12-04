@@ -101,7 +101,7 @@ public class AuthController(IConfiguration configuration, ApplicationDbContext d
                 user.DiscordAvatar = discordUser.avatar;
             }
 
-            await db.SaveChangesAsync();
+            await db.SaveChangesWithRetryAsync();
 
             Response.Cookies.Append(
                 "auth_token",
