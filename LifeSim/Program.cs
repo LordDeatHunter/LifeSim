@@ -11,6 +11,8 @@ public static class Program
 {
     public static WorldStorage World { get; private set; }
     public static int ReignitionCount { get; set; }
+    public static DateTime LastReignitionTime { get; set; } = DateTime.MinValue;
+    public static TimeSpan LongestLifeDuration { get; set; } = TimeSpan.Zero;
     public static readonly CancellationTokenSource Cts = new();
 
     public static async Task Main(string[] args)

@@ -19,6 +19,10 @@ public class SocketLogic
         var allAnimals = Program.World.GetAnimalDtos();
         var allFoods = Program.World.GetFoodDtos();
 
+        var currentLifeDuration = Program.LastReignitionTime != DateTime.MinValue
+            ? (DateTime.UtcNow - Program.LastReignitionTime).TotalMilliseconds
+            : 0;
+
         var initialPayload = new
         {
             animals = new
@@ -35,7 +39,9 @@ public class SocketLogic
             },
             timeFromStart = 0.0,
             activeClients = Clients.Keys.Count(c => c.State == WebSocketState.Open),
-            reignitions = Program.ReignitionCount
+            reignitions = Program.ReignitionCount,
+            currentLifeDuration = currentLifeDuration,
+            longestLifeDuration = Program.LongestLifeDuration.TotalMilliseconds
         };
 
         var initJson = JsonSerializer.Serialize(initialPayload);

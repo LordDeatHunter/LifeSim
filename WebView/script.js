@@ -58,7 +58,7 @@ let createConnection = () => {
   socket = new WebSocket(webURL);
 
   socket.onmessage = (event) => {
-    const { animals, foods, activeClients, timeFromStart, reignitions } =
+    const { animals, foods, activeClients, timeFromStart, reignitions, currentLifeDuration, longestLifeDuration } =
       JSON.parse(event.data);
     lastUpdate = performance.now();
 
@@ -116,9 +116,9 @@ let createConnection = () => {
     animalFoodTypeDisplays[1].innerText = `Carnivores: ${animalCounts["CARNIVORE"]}\n${animalCountsPercentage["CARNIVORE"]}%`;
     animalFoodTypeDisplays[2].innerText = `Omnivores: ${animalCounts["OMNIVORE"]}\n${animalCountsPercentage["OMNIVORE"]}%`;
 
-    elapsedTimeHeader.innerText = `Elapsed time: ${getTimeString(
-      timeFromStart,
-    )}`;
+    totalSimulationTimeHeader.innerText = `Total simulation time: ${getTimeString(timeFromStart)}`;
+    currentLifeDurationHeader.innerText = `Current life duration: ${getTimeString(currentLifeDuration)}`;
+    longestLifeDurationHeader.innerText = `Longest life duration: ${getTimeString(longestLifeDuration)}`;
     reignitionCounter.innerText = `Reignition count: ${reignitions}`;
 
     reigniteLifeButton.disabled = animalCount > 0;

@@ -7,6 +7,7 @@ namespace LifeSim.Network;
 public class SimulationLoop(WorldStorage world)
 {
     private float _dbUpdateDelta;
+    private bool _wasAlive = false;
 
     public async Task Start()
     {
@@ -26,6 +27,18 @@ public class SimulationLoop(WorldStorage world)
                 {
                     entity.Update(delta);
                 }
+
+                var currentLifeDuration = Program.LastReignitionTime != DateTime.MinValue
+                    ? (DateTime.UtcNow - Program.LastReignitionTime).TotalMilliseconds
+                    : 0;
+                if (currentLifeDuration > Program.LongestLifeDuration.TotalMilliseconds)
+                    Program.LongestLifeDuration = TimeSpan.FromMilliseconds(currentLifeDuration);
+
+                var hasAnimals = !world.Animals.IsEmpty;
+                if (_wasAlive && !hasAnimals)
+                    Program.LastReignitionTime = DateTime.MinValue;
+
+                _wasAlive = hasAnimals;
 
                 if (world.Foods.Count < 4000)
                 {

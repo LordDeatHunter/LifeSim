@@ -37,6 +37,7 @@ public class LifeSimController(LifeSimApi api) : ControllerBase
 
         Program.World.SpawnAnimals(animalCount, 1000F - posOffset, 1000F + posOffset, chaos);
         Program.ReignitionCount += 1;
+        Program.LastReignitionTime = DateTime.UtcNow;
 
         return Ok(new { message = "Life reignited", balance = user.Balance });
     }

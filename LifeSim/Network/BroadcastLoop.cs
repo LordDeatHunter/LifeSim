@@ -51,6 +51,10 @@ public class BroadcastLoop(SocketLogic socketLogic, WorldStorage world)
             foreach (var kvp in currentFoods)
                 previousFoods[kvp.Key] = kvp.Value;
 
+            var currentLifeDuration = Program.LastReignitionTime != DateTime.MinValue
+                ? (DateTime.UtcNow - Program.LastReignitionTime).TotalMilliseconds
+                : 0;
+
             var payload = new
             {
                 animals = new
@@ -67,7 +71,9 @@ public class BroadcastLoop(SocketLogic socketLogic, WorldStorage world)
                 },
                 timeFromStart = stopwatch.Elapsed.TotalMilliseconds,
                 activeClients = activeClients.Count,
-                reignitions = Program.ReignitionCount
+                reignitions = Program.ReignitionCount,
+                currentLifeDuration = currentLifeDuration,
+                longestLifeDuration = Program.LongestLifeDuration.TotalMilliseconds
             };
 
             var json = JsonSerializer.Serialize(payload);

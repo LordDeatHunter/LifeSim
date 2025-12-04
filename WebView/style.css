@@ -23,6 +23,17 @@ body {
   align-items: center;
 }
 
+#total-simulation-time-display {
+  margin-bottom: 5px;
+}
+
+#current-life-duration-display,
+#longest-life-duration-display {
+  font-size: 1.2em;
+  font-weight: normal;
+  margin: 5px 0;
+}
+
 .canvas-container {
   position: relative;
   justify-content: center;

@@ -13,7 +13,9 @@ let canvas;
 let ctx;
 let reigniteLifeButton;
 let viewerCountHeader;
-let elapsedTimeHeader;
+let totalSimulationTimeHeader;
+let currentLifeDurationHeader;
+let longestLifeDurationHeader;
 let animalFoodTypeDisplays;
 let entityCategoryDisplays;
 let reignitionCounter;
@@ -28,7 +30,9 @@ document.addEventListener("DOMContentLoaded", () => {
   ctx = canvas.getContext("2d");
   ctx.imageSmoothingEnabled = false;
   viewerCountHeader = document.getElementById("viewer-count-text");
-  elapsedTimeHeader = document.getElementById("elapsed-time-display");
+  totalSimulationTimeHeader = document.getElementById("total-simulation-time-display");
+  currentLifeDurationHeader = document.getElementById("current-life-duration-display");
+  longestLifeDurationHeader = document.getElementById("longest-life-duration-display");
   animalFoodTypeDisplays = document.querySelectorAll(".animal-type-display");
   entityCategoryDisplays = document.querySelectorAll(
     ".entity-category-display",
