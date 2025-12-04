@@ -12,10 +12,10 @@ namespace LifeSim.World;
 public class WorldStorage
 {
     private readonly IServiceScopeFactory _scopeFactory;
-    private readonly ConcurrentBag<int> _deletedFoods = [];
-    private readonly ConcurrentBag<int> _deletedAnimals = [];
-    private readonly ConcurrentBag<FoodEntity> _addedFoods = [];
-    private readonly ConcurrentBag<AnimalEntity> _addedAnimals = [];
+    private readonly ConcurrentQueue<int> _deletedFoods = new();
+    private readonly ConcurrentQueue<int> _deletedAnimals = new();
+    private readonly ConcurrentQueue<FoodEntity> _addedFoods = new();
+    private readonly ConcurrentQueue<AnimalEntity> _addedAnimals = new();
 
     public ConcurrentDictionary<int, Food> Foods { get; } = new();
     public ConcurrentDictionary<int, Animal> Animals { get; } = new();
@@ -74,7 +74,7 @@ public class WorldStorage
         Chunks[food.Position.ToChunkPosition()].Food.Remove(food);
         var deleted = Foods.TryRemove(food.Id, out _);
         if (!deleted) return;
-        _deletedFoods.Add(food.Id);
+        _deletedFoods.Enqueue(food.Id);
     }
 
     public void EnqueueAnimalDeletion(Animal animal)
@@ -82,21 +82,21 @@ public class WorldStorage
         Chunks[animal.Position.ToChunkPosition()].Animals.Remove(animal);
         var deleted = Animals.TryRemove(animal.Id, out _);
         if (!deleted) return;
-        _deletedAnimals.Add(animal.Id);
+        _deletedAnimals.Enqueue(animal.Id);
     }
     
     public void EnqueueFoodAddition(Food food)
     {
         Foods[food.Id] = food;
         Chunks[food.Position.ToChunkPosition()].Food.Add(food);
-        _addedFoods.Add(FoodEntity.ToDomain(food));
+        _addedFoods.Enqueue(FoodEntity.ToDomain(food));
     }
     
     public void EnqueueAnimalAddition(Animal animal)
     {
         Animals[animal.Id] = animal;
         Chunks[animal.Position.ToChunkPosition()].Animals.Add(animal);
-        _addedAnimals.Add(AnimalEntity.ToDomain(animal));
+        _addedAnimals.Enqueue(AnimalEntity.ToDomain(animal));
     }
 
     public async Task UpdateDbEntitiesAsync()
@@ -107,7 +107,22 @@ public class WorldStorage
         db.ChangeTracker.AutoDetectChangesEnabled = false;
         await using var tx = await db.Database.BeginTransactionAsync();
 
-        var foodIds = _deletedFoods.ToList();
+        var foodIds = new List<int>();
+        while (_deletedFoods.TryDequeue(out var foodId))
+            foodIds.Add(foodId);
+
+        var animalIds = new List<int>();
+        while (_deletedAnimals.TryDequeue(out var animalId))
+            animalIds.Add(animalId);
+
+        var addedFoodsList = new List<FoodEntity>();
+        while (_addedFoods.TryDequeue(out var food))
+            addedFoodsList.Add(food);
+
+        var addedAnimalsList = new List<AnimalEntity>();
+        while (_addedAnimals.TryDequeue(out var animal))
+            addedAnimalsList.Add(animal);
+
         if (foodIds.Count > 0)
         {
             await db.Foods
@@ -115,7 +130,6 @@ public class WorldStorage
                 .ExecuteDeleteAsync();
         }
         
-        var animalIds = _deletedAnimals.ToList();
         if (animalIds.Count > 0)
         {
             await db.Animals
@@ -123,8 +137,8 @@ public class WorldStorage
                 .ExecuteDeleteAsync();
         }
 
-        if (!_addedFoods.IsEmpty) await db.BulkInsertAsync(_addedFoods);
-        if (!_addedAnimals.IsEmpty) await db.BulkInsertAsync(_addedAnimals);
+        if (addedFoodsList.Count > 0) await db.BulkInsertAsync(addedFoodsList);
+        if (addedAnimalsList.Count > 0) await db.BulkInsertAsync(addedAnimalsList);
 
         try
         {
@@ -135,12 +149,9 @@ public class WorldStorage
         {
             Console.WriteLine(ex.StackTrace);
         }
-        db.ChangeTracker.AutoDetectChangesEnabled = true;
         
-        _deletedFoods.Clear();
-        _deletedAnimals.Clear();
-        _addedFoods.Clear();
-        _addedAnimals.Clear();
+        db.ChangeTracker.Clear();
+        db.ChangeTracker.AutoDetectChangesEnabled = true;
     }
 
     public void SpawnFood(int amount, float x, float y) => SpawnFood(amount, Vector2.One * x, Vector2.One * y);
