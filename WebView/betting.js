@@ -247,6 +247,21 @@ document.addEventListener("DOMContentLoaded", () => {
     betAmountInput.value = "1";
   };
 
+  const quarterBetButton = document.getElementById("quarter-bet-button");
+  quarterBetButton.onclick = () => {
+    betAmountInput.value = Math.floor(maxBalance / 4).toString();
+  };
+
+  const halfBetButton = document.getElementById("half-bet-button");
+  halfBetButton.onclick = () => {
+    betAmountInput.value = Math.floor(maxBalance / 2).toString();
+  };
+
+  const threeQuarterBetButton = document.getElementById("three-quarter-bet-button");
+  threeQuarterBetButton.onclick = () => {
+    betAmountInput.value = Math.floor(maxBalance * 3 / 4).toString();
+  };
+
   createLeaderboards();
   setInterval(createLeaderboards, 3 * 60 * 1000);
 

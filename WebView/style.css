@@ -320,11 +320,24 @@ input {
 
 .bet-input {
   display: flex;
+  flex-direction: column;
   gap: 8px;
 }
 
 .bet-input input {
+  padding: 8px;
+}
+
+.bet-quick-amounts {
+  display: flex;
+  gap: 6px;
+  justify-content: space-between;
+}
+
+.bet-quick-amounts button {
   flex: 1;
+  padding: 6px 8px;
+  font-size: 14px;
 }
 
 /* Authentication section styles */
