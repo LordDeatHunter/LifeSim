@@ -107,51 +107,54 @@ public class WorldStorage
         db.ChangeTracker.AutoDetectChangesEnabled = false;
         await using var tx = await db.Database.BeginTransactionAsync();
 
-        var foodIds = new List<int>();
-        while (_deletedFoods.TryDequeue(out var foodId))
-            foodIds.Add(foodId);
-
-        var animalIds = new List<int>();
-        while (_deletedAnimals.TryDequeue(out var animalId))
-            animalIds.Add(animalId);
-
-        var addedFoodsList = new List<FoodEntity>();
-        while (_addedFoods.TryDequeue(out var food))
-            addedFoodsList.Add(food);
-
-        var addedAnimalsList = new List<AnimalEntity>();
-        while (_addedAnimals.TryDequeue(out var animal))
-            addedAnimalsList.Add(animal);
-
-        if (foodIds.Count > 0)
-        {
-            await db.Foods
-                .Where(f => foodIds.Contains((byte)f.Id))
-                .ExecuteDeleteAsync();
-        }
-        
-        if (animalIds.Count > 0)
-        {
-            await db.Animals
-                .Where(a => animalIds.Contains((byte)a.Id))
-                .ExecuteDeleteAsync();
-        }
-
-        if (addedFoodsList.Count > 0) await db.BulkInsertAsync(addedFoodsList);
-        if (addedAnimalsList.Count > 0) await db.BulkInsertAsync(addedAnimalsList);
-
         try
         {
+            var foodIds = new List<int>();
+            while (_deletedFoods.TryDequeue(out var foodId))
+                foodIds.Add(foodId);
+
+            var animalIds = new List<int>();
+            while (_deletedAnimals.TryDequeue(out var animalId))
+                animalIds.Add(animalId);
+
+            var addedFoodsList = new List<FoodEntity>();
+            while (_addedFoods.TryDequeue(out var food))
+                addedFoodsList.Add(food);
+
+            var addedAnimalsList = new List<AnimalEntity>();
+            while (_addedAnimals.TryDequeue(out var animal))
+                addedAnimalsList.Add(animal);
+
+            if (foodIds.Count > 0)
+            {
+                await db.Foods
+                    .Where(f => foodIds.Contains((byte)f.Id))
+                    .ExecuteDeleteAsync();
+            }
+        
+            if (animalIds.Count > 0)
+            {
+                await db.Animals
+                    .Where(a => animalIds.Contains((byte)a.Id))
+                    .ExecuteDeleteAsync();
+            }
+
+            if (addedFoodsList.Count > 0) await db.BulkInsertAsync(addedFoodsList);
+            if (addedAnimalsList.Count > 0) await db.BulkInsertAsync(addedAnimalsList);
+
             await db.SaveChangesWithRetryAsync();
             await tx.CommitAsync();
         }
         catch (DbUpdateException ex)
         {
             Console.WriteLine(ex.StackTrace);
+            await tx.RollbackAsync();
         }
-        
-        db.ChangeTracker.Clear();
-        db.ChangeTracker.AutoDetectChangesEnabled = true;
+        finally
+        {
+            db.ChangeTracker.Clear();
+            db.ChangeTracker.AutoDetectChangesEnabled = true;
+        }
     }
 
     public void SpawnFood(int amount, float x, float y) => SpawnFood(amount, Vector2.One * x, Vector2.One * y);
@@ -162,7 +165,7 @@ public class WorldStorage
         using var scope = services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
 
         var foods = await db.Foods.AsNoTracking().ToListAsync(cts.Token);
         var animals = await db.Animals.AsNoTracking().ToListAsync(cts.Token);

@@ -28,29 +28,49 @@ public static class Program
         using(var scope = app.Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            await db.Database.MigrateAsync();
+            
+            try
+            {
+                await db.Database.MigrateAsync();
 
-            await db.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL;");
-            await db.Database.ExecuteSqlRawAsync("PRAGMA busy_timeout=5000;");
+                await db.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL;");
+                await db.Database.ExecuteSqlRawAsync("PRAGMA busy_timeout=5000;");
+            }
+            finally
+            {
+                // Ensure all connections are properly closed
+                await db.Database.CloseConnectionAsync();
+                await db.DisposeAsync();
+            }
         }
 
-        await Task.Delay(100);
+        // Give SQLite time to release the exclusive migration lock
+        Console.WriteLine("Waiting for database lock to be released...");
+        await Task.Delay(2000);
 
         World = app.Services.GetRequiredService<WorldStorage>();
 
         var retryCount = 0;
-        while (retryCount < 3)
+        while (retryCount < 5)
         {
             try
             {
+                Console.WriteLine($"Attempting to load world (attempt {retryCount + 1}/5)...");
                 await World.LoadWorldAsync(app.Services);
+                Console.WriteLine("World loaded successfully!");
                 break;
             }
-            catch (Exception ex) when (retryCount < 2)
+            catch (OperationCanceledException ex) when (retryCount < 4)
             {
-                Console.WriteLine($"Failed to load world (attempt {retryCount + 1}/3): {ex.Message}");
+                Console.WriteLine($"Failed to load world (attempt {retryCount + 1}/5): Timeout - {ex.Message}");
                 retryCount++;
-                await Task.Delay(500 * retryCount);
+                await Task.Delay(1000 * (retryCount + 1));
+            }
+            catch (Exception ex) when (retryCount < 4)
+            {
+                Console.WriteLine($"Failed to load world (attempt {retryCount + 1}/5): {ex.Message}");
+                retryCount++;
+                await Task.Delay(1000 * (retryCount + 1));
             }
         }
 
