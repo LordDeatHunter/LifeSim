@@ -6,33 +6,29 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace LifeSim.Network;
 
-public class BroadcastLoop(IHubContext<GameHub> hubContext, WorldStorage world)
+public class BroadcastLoop(IHubContext<GameHub> hubContext, WorldStorage world, StatisticsTracker statisticsTracker)
 {
     public async Task Start()
     {
         var previousAnimals = new Dictionary<string, AnimalDto>();
         var previousFoods = new Dictionary<string, FoodDto>();
         var stopwatch = Stopwatch.StartNew();
+        var lastBroadcastTime = DateTime.UtcNow;
 
         while (!Program.Cts.IsCancellationRequested)
         {
-
             var currentAnimals = world.GetAnimalDtos();
             var currentFoods = world.GetFoodDtos();
 
+            statisticsTracker.RecordSnapshot(currentAnimals.Count, currentFoods.Count);
+
             var addedAnimals = new Dictionary<string, AnimalDto>();
-            foreach (var kvp in currentAnimals)
-            {
-                if (!previousAnimals.ContainsKey(kvp.Key))
-                    addedAnimals[kvp.Key] = kvp.Value;
-            }
+            foreach (var kvp in currentAnimals.Where(kvp => !previousAnimals.ContainsKey(kvp.Key)))
+                addedAnimals[kvp.Key] = kvp.Value;
 
             var addedFoods = new Dictionary<string, FoodDto>();
-            foreach (var kvp in currentFoods)
-            {
-                if (!previousFoods.ContainsKey(kvp.Key))
-                    addedFoods[kvp.Key] = kvp.Value;
-            }
+            foreach (var kvp in currentFoods.Where(kvp => !previousFoods.ContainsKey(kvp.Key)))
+                addedFoods[kvp.Key] = kvp.Value;
 
             var removedAnimals = previousAnimals.Keys.Where(key => !currentAnimals.ContainsKey(key)).ToList();
             var removedFoods = previousFoods.Keys.Where(key => !currentFoods.ContainsKey(key)).ToList();
@@ -52,6 +48,8 @@ public class BroadcastLoop(IHubContext<GameHub> hubContext, WorldStorage world)
                 ? (DateTime.UtcNow - Program.LastReignitionTime).TotalMilliseconds
                 : 0;
 
+            var recentStatistics = statisticsTracker.GetSnapshotsSince(lastBroadcastTime);
+
             var payload = new
             {
                 animals = new
@@ -70,11 +68,13 @@ public class BroadcastLoop(IHubContext<GameHub> hubContext, WorldStorage world)
                 activeClients = GameHub.GetActiveClientCount(),
                 reignitions = Program.ReignitionCount,
                 currentLifeDuration,
-                longestLifeDuration = Program.LongestLifeDuration.TotalMilliseconds
+                longestLifeDuration = Program.LongestLifeDuration.TotalMilliseconds,
+                statistics = recentStatistics
             };
 
             await hubContext.Clients.All.SendAsync("ReceiveUpdate", payload, Program.Cts.Token);
 
+            lastBroadcastTime = DateTime.UtcNow;
             await Task.Delay(300, Program.Cts.Token);
         }
     }

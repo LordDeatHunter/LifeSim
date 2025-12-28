@@ -23,6 +23,7 @@ public static class ServerSetup
                 })
         );
         builder.Services.AddSingleton<WorldStorage>();
+        builder.Services.AddSingleton<StatisticsTracker>();
         builder.Services.AddSignalR();
 
         return builder;

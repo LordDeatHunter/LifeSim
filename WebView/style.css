@@ -492,11 +492,37 @@ input {
   }
 }
 
+.chart-container {
+  width: 90%;
+  max-width: 1024px;
+  margin: 30px auto;
+  padding: 20px;
+  background-color: #1e1e1e;
+  border: 1px solid #cecece;
+  border-radius: 4px;
+}
+
+.chart-container h2 {
+  text-align: center;
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #cecece;
+}
+
+#population-chart {
+  max-height: 300px;
+}
+
 @media (max-width: 768px) {
   .auth-section {
     position: relative;
     top: 0;
     right: 0;
     margin-bottom: 20px;
+  }
+
+  .chart-container {
+    width: 95%;
+    padding: 10px;
   }
 }

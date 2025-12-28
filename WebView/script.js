@@ -55,6 +55,7 @@ const applyDiff = (cache, diffs, type) => {
 
 let createConnection = async () => {
   resetState();
+  resetChart();
 
   connection = new signalR.HubConnectionBuilder()
     .withUrl(hubURL)
@@ -62,13 +63,15 @@ let createConnection = async () => {
     .build();
 
   connection.on("ReceiveUpdate", (data) => {
-    const { animals, foods, activeClients, timeFromStart, reignitions, currentLifeDuration, longestLifeDuration } = data;
+    const { animals, foods, activeClients, timeFromStart, reignitions, currentLifeDuration, longestLifeDuration, statistics } = data;
     lastUpdate = performance.now();
 
     prevEntities = JSON.parse(JSON.stringify(entities));
 
     applyDiff(entities, animals, "animal");
     applyDiff(entities, foods, "food");
+
+    updateChart(statistics);
 
     let animalCounts = {
       HERBIVORE: 0,

@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace LifeSim.Network;
 
-public class GameHub : Hub
+public class GameHub(StatisticsTracker statisticsTracker) : Hub
 {
     private static readonly HashSet<string> ConnectedIds = [];
     private static readonly Lock Lock = new();
@@ -39,7 +39,8 @@ public class GameHub : Hub
             activeClients = GetActiveClientCount(),
             reignitions = Program.ReignitionCount,
             currentLifeDuration,
-            longestLifeDuration = Program.LongestLifeDuration.TotalMilliseconds
+            longestLifeDuration = Program.LongestLifeDuration.TotalMilliseconds,
+            statistics = statisticsTracker.GetAllSnapshots()
         };
 
         await Clients.Caller.SendAsync("ReceiveUpdate", initialPayload);

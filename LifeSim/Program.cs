@@ -78,9 +78,10 @@ public static class Program
         };
 
         var hubContext = app.Services.GetRequiredService<IHubContext<GameHub>>();
+        var statisticsTracker = app.Services.GetRequiredService<StatisticsTracker>();
 
         SimulationLoop simulationLoop = new(World);
-        BroadcastLoop broadcastLoop = new(hubContext, World);
+        BroadcastLoop broadcastLoop = new(hubContext, World, statisticsTracker);
 
         _ = Task.Run(simulationLoop.Start);
         _ = Task.Run(broadcastLoop.Start);

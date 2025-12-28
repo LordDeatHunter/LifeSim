@@ -4,6 +4,8 @@
     <title>Life Viewer</title>
     <meta charset="UTF-8" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="chart.js"></script>
     <script src="script.js"></script>
     <script src="utils.js"></script>
     <script src="auth.js"></script>
@@ -79,6 +81,10 @@
             <h4>Reignition cost: <span id="reignition-cost">0</span> 💰</h4>
           </div>
         </div>
+      </div>
+      <div class="chart-container">
+        <h2>Population History (Last Minute)</h2>
+        <canvas id="population-chart"></canvas>
       </div>
       <div id="betting-menu" class="betting-box" style="display: none;">
         <h2>
