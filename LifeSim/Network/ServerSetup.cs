@@ -23,12 +23,8 @@ public static class ServerSetup
                 })
         );
         builder.Services.AddSingleton<WorldStorage>();
+        builder.Services.AddSignalR();
 
         return builder;
-    }
-
-    public static void ConfigureMiddleware(WebApplication app, WebApplicationBuilder builder)
-    {
-        app.UseWebSockets();
     }
 }

@@ -3,6 +3,7 @@ using DotNetEnv;
 using LifeSim.Data;
 using LifeSim.Network;
 using LifeSim.World;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace LifeSim;
@@ -19,11 +20,10 @@ public static class Program
     {
         Env.Load();
 
-        SocketLogic socketLogic = new();
         var builder = ServerSetup.ConfigureServices(args);
         var app = builder.Build();
-        ServerSetup.ConfigureMiddleware(app, builder);
         app.MapControllers();
+        app.MapHub<GameHub>("/hub");
 
         using(var scope = app.Services.CreateScope())
         {
@@ -77,10 +77,10 @@ public static class Program
             e.SetObserved();
         };
 
-        app.Map("/ws", socketLogic.HandleWebSocket);
+        var hubContext = app.Services.GetRequiredService<IHubContext<GameHub>>();
 
         SimulationLoop simulationLoop = new(World);
-        BroadcastLoop broadcastLoop = new(socketLogic, World);
+        BroadcastLoop broadcastLoop = new(hubContext, World);
 
         _ = Task.Run(simulationLoop.Start);
         _ = Task.Run(broadcastLoop.Start);

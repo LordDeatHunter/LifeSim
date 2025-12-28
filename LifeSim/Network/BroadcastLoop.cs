@@ -1,14 +1,12 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Net.WebSockets;
-using System.Text;
-using System.Text.Json;
 using LifeSim.Data;
 using LifeSim.World;
+using Microsoft.AspNetCore.SignalR;
 
 namespace LifeSim.Network;
 
-public class BroadcastLoop(SocketLogic socketLogic, WorldStorage world)
+public class BroadcastLoop(IHubContext<GameHub> hubContext, WorldStorage world)
 {
     public async Task Start()
     {
@@ -18,7 +16,6 @@ public class BroadcastLoop(SocketLogic socketLogic, WorldStorage world)
 
         while (!Program.Cts.IsCancellationRequested)
         {
-            var activeClients = socketLogic.Clients.Keys.Where(c => c.State == WebSocketState.Open).ToList();
 
             var currentAnimals = world.GetAnimalDtos();
             var currentFoods = world.GetFoodDtos();
@@ -70,27 +67,13 @@ public class BroadcastLoop(SocketLogic socketLogic, WorldStorage world)
                     updated = updatedFoods
                 },
                 timeFromStart = stopwatch.Elapsed.TotalMilliseconds,
-                activeClients = activeClients.Count,
+                activeClients = GameHub.GetActiveClientCount(),
                 reignitions = Program.ReignitionCount,
-                currentLifeDuration = currentLifeDuration,
+                currentLifeDuration,
                 longestLifeDuration = Program.LongestLifeDuration.TotalMilliseconds
             };
 
-            var json = JsonSerializer.Serialize(payload);
-            var buffer = Encoding.UTF8.GetBytes(json);
-            var segment = new ArraySegment<byte>(buffer);
-
-            foreach (var client in activeClients)
-            {
-                try
-                {
-                    await client.SendAsync(segment, WebSocketMessageType.Text, true, CancellationToken.None);
-                }
-                catch
-                {
-                    /* dead client */
-                }
-            }
+            await hubContext.Clients.All.SendAsync("ReceiveUpdate", payload, Program.Cts.Token);
 
             await Task.Delay(300, Program.Cts.Token);
         }

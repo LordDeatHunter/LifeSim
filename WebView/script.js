@@ -1,5 +1,5 @@
-let socket;
-const webURL = "ws://localhost:5000/ws";
+let connection;
+const hubURL = "http://localhost:5000/hub";
 const API_ENDPOINT = "http://localhost:5000/api";
 
 const lerpDuration = 300;
@@ -53,13 +53,16 @@ const applyDiff = (cache, diffs, type) => {
   });
 };
 
-let createConnection = () => {
+let createConnection = async () => {
   resetState();
-  socket = new WebSocket(webURL);
 
-  socket.onmessage = (event) => {
-    const { animals, foods, activeClients, timeFromStart, reignitions, currentLifeDuration, longestLifeDuration } =
-      JSON.parse(event.data);
+  connection = new signalR.HubConnectionBuilder()
+    .withUrl(hubURL)
+    .withAutomaticReconnect()
+    .build();
+
+  connection.on("ReceiveUpdate", (data) => {
+    const { animals, foods, activeClients, timeFromStart, reignitions, currentLifeDuration, longestLifeDuration } = data;
     lastUpdate = performance.now();
 
     prevEntities = JSON.parse(JSON.stringify(entities));
@@ -122,7 +125,27 @@ let createConnection = () => {
     reignitionCounter.innerText = `Reignition count: ${reignitions}`;
 
     reigniteLifeButton.disabled = animalCount > 0;
-  };
+  });
+
+  connection.onreconnecting(() => {
+    console.log("Reconnecting to hub...");
+  });
+
+  connection.onreconnected(() => {
+    console.log("Reconnected to hub");
+  });
+
+  connection.onclose(() => {
+    console.log("Connection closed");
+  });
+
+  try {
+    await connection.start();
+    console.log("SignalR connected");
+  } catch (err) {
+    console.error("Error connecting to hub:", err);
+    setTimeout(createConnection, 5000);
+  }
 };
 
 const renderEntity = (position, diameter, color, outline) => {
@@ -251,10 +274,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
 createConnection();
 
-document.addEventListener("visibilitychange", () => {
+document.addEventListener("visibilitychange", async () => {
   if (document.hidden) {
-    socket.close();
+    if (connection) {
+      await connection.stop();
+    }
   } else {
-    createConnection();
+    await createConnection();
   }
 });
