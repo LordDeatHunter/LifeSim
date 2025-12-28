@@ -49,30 +49,7 @@ public static class Program
         await Task.Delay(2000);
 
         World = app.Services.GetRequiredService<WorldStorage>();
-
-        var retryCount = 0;
-        while (retryCount < 5)
-        {
-            try
-            {
-                Console.WriteLine($"Attempting to load world (attempt {retryCount + 1}/5)...");
-                await World.LoadWorldAsync(app.Services);
-                Console.WriteLine("World loaded successfully!");
-                break;
-            }
-            catch (OperationCanceledException ex) when (retryCount < 4)
-            {
-                Console.WriteLine($"Failed to load world (attempt {retryCount + 1}/5): Timeout - {ex.Message}");
-                retryCount++;
-                await Task.Delay(1000 * (retryCount + 1));
-            }
-            catch (Exception ex) when (retryCount < 4)
-            {
-                Console.WriteLine($"Failed to load world (attempt {retryCount + 1}/5): {ex.Message}");
-                retryCount++;
-                await Task.Delay(1000 * (retryCount + 1));
-            }
-        }
+        Console.WriteLine("World initialized successfully!");
 
         Console.CancelKeyPress += (_, e) =>
         {

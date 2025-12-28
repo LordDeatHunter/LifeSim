@@ -6,8 +6,7 @@ namespace LifeSim.Network;
 
 public class SimulationLoop(WorldStorage world)
 {
-    private float _dbUpdateDelta;
-    private bool _wasAlive = false;
+    private bool _wasAlive;
 
     public async Task Start()
     {
@@ -44,13 +43,6 @@ public class SimulationLoop(WorldStorage world)
                 {
                     var foodAmount = RandomUtils.RNG.Next(0, 6);
                     world.SpawnFood(foodAmount, 0, 2048);
-                }
-
-                _dbUpdateDelta += delta;
-                if (_dbUpdateDelta >= 5.0F)
-                {
-                    _dbUpdateDelta -= 5.0F;
-                    await Program.World.UpdateDbEntitiesAsync();
                 }
             }
             catch (Exception ex)
