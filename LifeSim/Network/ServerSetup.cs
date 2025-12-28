@@ -16,7 +16,7 @@ public static class ServerSetup
         builder.Services.AddDistributedMemoryCache();
         builder.Services.AddScoped<LifeSimApi>();
         builder.Services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseSqlite("Data Source=lifesim.db;Mode=ReadWriteCreate;Pooling=False",
+            options.UseSqlite("Data Source=lifesim.db;Mode=ReadWriteCreate;Cache=Shared",
                 sqliteOptions =>
                 {
                     sqliteOptions.CommandTimeout(60);

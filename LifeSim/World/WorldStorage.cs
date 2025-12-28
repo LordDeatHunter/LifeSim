@@ -154,6 +154,7 @@ public class WorldStorage
         {
             db.ChangeTracker.Clear();
             db.ChangeTracker.AutoDetectChangesEnabled = true;
+            await db.Database.CloseConnectionAsync();
         }
     }
 
@@ -183,6 +184,10 @@ public class WorldStorage
         {
             await transaction.RollbackAsync(cts.Token);
             throw;
+        }
+        finally
+        {
+            await db.Database.CloseConnectionAsync();
         }
     
         foods.Select(FoodEntity.FromDomain).ToList().ForEach(EnqueueFoodAddition);
