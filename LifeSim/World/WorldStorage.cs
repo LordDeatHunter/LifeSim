@@ -101,6 +101,25 @@ public class WorldStorage
 
     public async Task UpdateDbEntitiesAsync()
     {
+        var foodIds = new List<int>();
+        while (_deletedFoods.TryDequeue(out var foodId))
+            foodIds.Add(foodId);
+
+        var animalIds = new List<int>();
+        while (_deletedAnimals.TryDequeue(out var animalId))
+            animalIds.Add(animalId);
+
+        var addedFoodsList = new List<FoodEntity>();
+        while (_addedFoods.TryDequeue(out var food))
+            addedFoodsList.Add(food);
+
+        var addedAnimalsList = new List<AnimalEntity>();
+        while (_addedAnimals.TryDequeue(out var animal))
+            addedAnimalsList.Add(animal);
+
+        if (foodIds.Count == 0 && animalIds.Count == 0 && addedFoodsList.Count == 0 && addedAnimalsList.Count == 0)
+            return;
+
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
@@ -109,29 +128,13 @@ public class WorldStorage
 
         try
         {
-            var foodIds = new List<int>();
-            while (_deletedFoods.TryDequeue(out var foodId))
-                foodIds.Add(foodId);
-
-            var animalIds = new List<int>();
-            while (_deletedAnimals.TryDequeue(out var animalId))
-                animalIds.Add(animalId);
-
-            var addedFoodsList = new List<FoodEntity>();
-            while (_addedFoods.TryDequeue(out var food))
-                addedFoodsList.Add(food);
-
-            var addedAnimalsList = new List<AnimalEntity>();
-            while (_addedAnimals.TryDequeue(out var animal))
-                addedAnimalsList.Add(animal);
-
             if (foodIds.Count > 0)
             {
                 await db.Foods
                     .Where(f => foodIds.Contains((byte)f.Id))
                     .ExecuteDeleteAsync();
             }
-        
+
             if (animalIds.Count > 0)
             {
                 await db.Animals
@@ -147,7 +150,7 @@ public class WorldStorage
         }
         catch (DbUpdateException ex)
         {
-            Console.WriteLine(ex.StackTrace);
+            Console.WriteLine($"DB Update Error: {ex.Message}");
             await tx.RollbackAsync();
         }
         finally

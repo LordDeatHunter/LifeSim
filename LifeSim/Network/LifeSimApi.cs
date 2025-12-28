@@ -56,9 +56,15 @@ public class LifeSimApi
         {
             while (true)
             {
+                await Task.Delay(1000);
+
                 using var scope = _scopeFactory.CreateScope();
                 var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
                 var expiredPendingBets = await db.ExpiredPendingBetsAsync();
+
+                if (expiredPendingBets.Count == 0) continue;
+
                 var finalCount = Program.World.Animals.Count;
 
                 foreach (var bet in expiredPendingBets)
@@ -91,9 +97,7 @@ public class LifeSimApi
                     user.Balance += bet.Amount * 2;
                 }
 
-                if (expiredPendingBets.Count != 0) await db.SaveChangesWithRetryAsync();
-
-                await Task.Delay(1000);
+                await db.SaveChangesWithRetryAsync();
             }
         }
         catch (Exception ex)

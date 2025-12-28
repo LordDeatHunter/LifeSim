@@ -47,9 +47,9 @@ public class SimulationLoop(WorldStorage world)
                 }
 
                 _dbUpdateDelta += delta;
-                if (_dbUpdateDelta >= 1.0F)
+                if (_dbUpdateDelta >= 5.0F)
                 {
-                    _dbUpdateDelta -= 1.0F;
+                    _dbUpdateDelta -= 5.0F;
                     await Program.World.UpdateDbEntitiesAsync();
                 }
             }
