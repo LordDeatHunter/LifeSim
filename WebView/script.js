@@ -209,8 +209,16 @@ const render = () => {
 
       if (type === "food") {
         renderFood({ x, y }, size, opacity);
+        if (curr.infected) {
+          ctx.beginPath();
+          ctx.arc(x, y, size / 2, 0, Math.PI * 2);
+          ctx.strokeStyle = appendAlpha('#8B008B', opacity);
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
       } else {
-        renderEntity({ x, y }, size, color, color);
+        const outline = curr.infected ? appendAlpha('#8B008B', opacity) : color;
+        renderEntity({ x, y }, size, color, outline);
       }
     }
   }
@@ -239,6 +247,7 @@ const render = () => {
 
   ctx.restore();
 
+  renderPlaguePreview();
   requestAnimationFrame(render);
 };
 

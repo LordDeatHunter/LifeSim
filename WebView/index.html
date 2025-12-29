@@ -12,6 +12,7 @@
     <script src="elements.js"></script>
     <script src="betting.js"></script>
     <script src="canvas.js"></script>
+    <script src="plague.js"></script>
     <link rel="stylesheet" href="style.css" />
     <link rel="stylesheet" href="icons.css" />
     <link rel="icon" href="lifesim.png" type="image/x-icon" />
@@ -79,6 +80,24 @@
             </div>
             <button id="reignite-life-button">Reignite Life</button>
             <h4>Reignition cost: <span id="reignition-cost">0</span> 💰</h4>
+
+            <hr style="margin: 20px 0; border-color: #cecece;">
+
+            <h2>Plague:</h2>
+            <p style="font-size: 12px; margin: 8px 0; color: #999;">Right-click on map to place pin</p>
+            <div class="slider-container">
+              <label id="plague-size-label" for="plague-size-slider">🦠 Size: 50</label>
+              <input
+                type="range"
+                id="plague-size-slider"
+                min="10"
+                max="500"
+                step="10"
+                value="50"
+              />
+            </div>
+            <button id="start-plague-button">Start Plague</button>
+            <h4>Plague cost: <span id="plague-cost">0</span> 💰</h4>
           </div>
         </div>
       </div>

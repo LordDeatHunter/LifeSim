@@ -476,7 +476,7 @@ public class Animal : Entity
     }
 
     public override IEntityDto ToDTO() =>
-        new AnimalDto(Id.ToString(), Position.X, Position.Y, Color.ToHex(), Size, PredationInclination, Dead);
+        new AnimalDto(Id.ToString(), Position.X, Position.Y, Color.ToHex(), Size, PredationInclination, Dead, Infected);
 
     public override float NutritionValue => Size / 2F * (1F - RotAmount);
 }

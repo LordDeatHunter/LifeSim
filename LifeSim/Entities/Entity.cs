@@ -18,6 +18,7 @@ public abstract class Entity(Vector2 position, Color color, float size = 8F)
     public Color Color { get; set; } = color;
     public float Size { get; set; } = float.Clamp(size, 2F, 32F);
     public bool MarkedForDeletion { get; private set; }
+    public bool Infected { get; set; }
 
     public abstract void Update(float deltaTime);
 

@@ -35,7 +35,7 @@ public class Food : Entity
         Program.World.EnqueueFoodDeletion(this);
     }
 
-    public override IEntityDto ToDTO() => new FoodDto(Id.ToString(), Position.X, Position.Y, Color.ToHex(), Size);
+    public override IEntityDto ToDTO() => new FoodDto(Id.ToString(), Position.X, Position.Y, Color.ToHex(), Size, Infected);
 
     public override float NutritionValue => Size / 2F;
 }
