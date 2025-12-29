@@ -42,7 +42,6 @@ const initializeChart = () => {
     },
     options: {
       responsive: true,
-      maintainAspectRatio: true,
       interaction: {
         mode: 'index',
         intersect: false,
@@ -53,8 +52,8 @@ const initializeChart = () => {
           ticks: {
             color: '#cecece',
             maxRotation: 0,
-            autoSkipPadding: 20,
-            callback: (value, index) => index % 10 === 0 ? this.getLabelForValue(value) : ''
+            autoSkip: true,
+            maxTicksLimit: 12
           },
           grid: {
             color: '#333333'
@@ -154,4 +153,3 @@ const resetChart = () => {
 document.addEventListener('DOMContentLoaded', () => {
   initializeChart();
 });
-
