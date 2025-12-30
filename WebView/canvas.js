@@ -26,6 +26,8 @@ const clampCam = () => {
 
 document.addEventListener("DOMContentLoaded", () => {
   canvas.addEventListener("mousedown", (e) => {
+    if (e.button !== 0) return;
+
     isPanning = true;
     lastPanX = e.clientX;
     lastPanY = e.clientY;

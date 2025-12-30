@@ -128,4 +128,65 @@ public class LifeSimController(LifeSimApi api) : ControllerBase
     {
         return Ok(await api.GetLeaderboardsAsync());
     }
+
+    [HttpPost("start-plague")]
+    public async Task<IActionResult> StartPlague([FromBody] PlagueRequest request)
+    {
+        var clientId = ClientId.GetClientId(HttpContext);
+        if (string.IsNullOrEmpty(clientId))
+            return BadRequest(new { message = ClientIdMissingMessage });
+
+        var user = await api.GetUserAsync(clientId);
+        if (user == null)
+            return Unauthorized(new { message = "User not found. Please authenticate with Discord first." });
+
+        if (request.Radius is <= 0 or > 500)
+            return BadRequest(new { message = "Invalid radius. Must be between 0 and 500." });
+
+        if (request.X is < 0 or > 2048 || request.Y is < 0 or > 2048)
+            return BadRequest(new { message = "Invalid coordinates. Must be within world bounds (0-2048)." });
+
+        var area = MathF.PI * request.Radius * request.Radius;
+        var plagueCost = (long)(area * 0.5 * 0.01); // 0.5 coins per square unit
+
+        if (user.Balance < (ulong)plagueCost)
+            return BadRequest(new { message = "Insufficient balance", required = plagueCost, balance = user.Balance });
+
+        await api.AddBalanceAsync(clientId, -plagueCost);
+
+        var infectedCount = 0;
+        var radiusSquared = request.Radius * request.Radius;
+
+        foreach (var animal in Program.World.Animals.Values)
+        {
+            var dx = animal.Position.X - request.X;
+            var dy = animal.Position.Y - request.Y;
+            var distanceSquared = dx * dx + dy * dy;
+
+            if (distanceSquared > radiusSquared) continue;
+
+            animal.Infected = true;
+            infectedCount++;
+        }
+
+        foreach (var food in Program.World.Foods.Values)
+        {
+            var dx = food.Position.X - request.X;
+            var dy = food.Position.Y - request.Y;
+            var distanceSquared = dx * dx + dy * dy;
+
+            if (distanceSquared > radiusSquared) continue;
+
+            food.Infected = true;
+            infectedCount++;
+        }
+
+        return Ok(new
+        {
+            message = "Plague started",
+            balance = user.Balance,
+            cost = plagueCost,
+            infectedCount
+        });
+    }
 }

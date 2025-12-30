@@ -37,6 +37,17 @@ const initializeChart = () => {
           pointHoverRadius: 4,
           tension: 0.4,
           fill: true
+        },
+        {
+          label: 'Plague',
+          data: [],
+          borderColor: '#E91E63',
+          backgroundColor: 'rgba(233, 30, 99, 0.1)',
+          borderWidth: 2,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          tension: 0.4,
+          fill: true
         }
       ]
     },
@@ -132,10 +143,12 @@ const updateChart = (statistics) => {
   });
   const animalData = statisticsHistory.map(s => s.animalCount);
   const foodData = statisticsHistory.map(s => s.foodCount);
+  const plagueData = statisticsHistory.map(s => (s.infectedAnimalCount || 0) + (s.infectedFoodCount || 0));
 
   populationChart.data.labels = labels;
   populationChart.data.datasets[0].data = animalData;
   populationChart.data.datasets[1].data = foodData;
+  populationChart.data.datasets[2].data = plagueData;
 
   populationChart.update('none');
 };
@@ -146,6 +159,7 @@ const resetChart = () => {
     populationChart.data.labels = [];
     populationChart.data.datasets[0].data = [];
     populationChart.data.datasets[1].data = [];
+    populationChart.data.datasets[2].data = [];
     populationChart.update();
   }
 };

@@ -27,6 +27,11 @@ public class Food : Entity
     public override void Update(float deltaTime)
     {
         Age += deltaTime;
+        if (Infected)
+        {
+            Age += deltaTime * 2F;
+            TryInfectNearbyEntities(deltaTime);
+        }
     }
 
     public override void MarkForDeletion()
@@ -35,7 +40,7 @@ public class Food : Entity
         Program.World.EnqueueFoodDeletion(this);
     }
 
-    public override IEntityDto ToDTO() => new FoodDto(Id.ToString(), Position.X, Position.Y, Color.ToHex(), Size);
+    public override IEntityDto ToDTO() => new FoodDto(Id.ToString(), Position.X, Position.Y, Color.ToHex(), Size, Infected);
 
     public override float NutritionValue => Size / 2F;
 }
