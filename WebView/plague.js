@@ -19,6 +19,12 @@ const updatePlagueCost = () => {
   }
 };
 
+const updatePlagueButtonState = () => {
+  if (startPlagueButton) {
+    startPlagueButton.disabled = !plaguePinPosition;
+  }
+};
+
 const canvasToWorldCoords = (canvasX, canvasY) => {
   const rect = canvas.getBoundingClientRect();
   const x = canvasX - rect.left;
@@ -76,6 +82,7 @@ const handleCanvasClickForPlague = (e) => {
   worldCoords.y = clamp(worldCoords.y, 0, 2048);
 
   plaguePinPosition = worldCoords;
+  updatePlagueButtonState();
 };
 
 const startPlague = async () => {
@@ -103,6 +110,7 @@ const startPlague = async () => {
 
     if (response.ok) {
       plaguePinPosition = null;
+      updatePlagueButtonState();
 
       if (balanceAmountDisplay) {
         balanceAmountDisplay.innerText = data.balance;
@@ -138,5 +146,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   updatePlagueCost();
+  updatePlagueButtonState();
 });
 
