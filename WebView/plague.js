@@ -45,7 +45,7 @@ const renderPlaguePreview = () => {
 
   ctx.save();
   ctx.globalAlpha = 0.3;
-  ctx.fillStyle = '#8B008B'; // Dark magenta/purple
+  ctx.fillStyle = '#8B008B';
   ctx.beginPath();
   ctx.arc(canvasPos.x, canvasPos.y, radiusOnCanvas, 0, Math.PI * 2);
   ctx.fill();
@@ -55,7 +55,6 @@ const renderPlaguePreview = () => {
   ctx.lineWidth = 2;
   ctx.stroke();
 
-  // Draw center pin
   ctx.globalAlpha = 1;
   ctx.fillStyle = '#FF00FF';
   ctx.beginPath();
@@ -69,11 +68,10 @@ const handleCanvasClickForPlague = (e) => {
   // Only handle right-click (button 2)
   if (e.button !== 2) return;
 
-  e.preventDefault(); // Prevent context menu
+  e.preventDefault();
 
   const worldCoords = canvasToWorldCoords(e.clientX, e.clientY);
 
-  // Clamp to world bounds
   worldCoords.x = clamp(worldCoords.x, 0, 2048);
   worldCoords.y = clamp(worldCoords.y, 0, 2048);
 
@@ -82,7 +80,6 @@ const handleCanvasClickForPlague = (e) => {
 
 const startPlague = async () => {
   if (!plaguePinPosition) {
-    alert('Please place a plague pin on the map first!\n(Right-click on the canvas)');
     return;
   }
 
@@ -105,22 +102,14 @@ const startPlague = async () => {
     const data = await response.json();
 
     if (response.ok) {
-      alert(`Plague started! Infected ${data.infectedCount} entities. Cost: ${data.cost} 💰`);
-      plaguePinPosition = null; // Clear the pin
+      plaguePinPosition = null;
 
-      // Update balance display
-      if (typeof balanceAmountDisplay !== 'undefined' && balanceAmountDisplay) {
+      if (balanceAmountDisplay) {
         balanceAmountDisplay.innerText = data.balance;
-      }
-    } else {
-      alert(`Error: ${data.message}`);
-      if (data.required) {
-        alert(`Required: ${data.required} 💰, Your balance: ${data.balance} 💰`);
       }
     }
   } catch (error) {
     console.error('Error starting plague:', error);
-    alert('Failed to start plague. Please try again.');
   }
 };
 
@@ -142,10 +131,8 @@ document.addEventListener('DOMContentLoaded', () => {
     startPlagueButton.addEventListener('click', startPlague);
   }
 
-  // Right-click on canvas to place plague pin
   canvas.addEventListener('mousedown', handleCanvasClickForPlague);
 
-  // Prevent context menu on canvas
   canvas.addEventListener('contextmenu', (e) => {
     e.preventDefault();
   });

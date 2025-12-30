@@ -140,10 +140,10 @@ public class LifeSimController(LifeSimApi api) : ControllerBase
         if (user == null)
             return Unauthorized(new { message = "User not found. Please authenticate with Discord first." });
 
-        if (request.Radius <= 0 || request.Radius > 500)
+        if (request.Radius is <= 0 or > 500)
             return BadRequest(new { message = "Invalid radius. Must be between 0 and 500." });
 
-        if (request.X < 0 || request.X > 2048 || request.Y < 0 || request.Y > 2048)
+        if (request.X is < 0 or > 2048 || request.Y is < 0 or > 2048)
             return BadRequest(new { message = "Invalid coordinates. Must be within world bounds (0-2048)." });
 
         var area = MathF.PI * request.Radius * request.Radius;
@@ -163,11 +163,10 @@ public class LifeSimController(LifeSimApi api) : ControllerBase
             var dy = animal.Position.Y - request.Y;
             var distanceSquared = dx * dx + dy * dy;
 
-            if (distanceSquared <= radiusSquared)
-            {
-                animal.Infected = true;
-                infectedCount++;
-            }
+            if (distanceSquared > radiusSquared) continue;
+
+            animal.Infected = true;
+            infectedCount++;
         }
 
         foreach (var food in Program.World.Foods.Values)
@@ -176,16 +175,11 @@ public class LifeSimController(LifeSimApi api) : ControllerBase
             var dy = food.Position.Y - request.Y;
             var distanceSquared = dx * dx + dy * dy;
 
-            if (distanceSquared <= radiusSquared)
-            {
-                food.Infected = true;
-                infectedCount++;
-            }
-        }
+            if (distanceSquared > radiusSquared) continue;
 
-        user = await api.GetUserAsync(clientId);
-        if (user == null)
-            return Unauthorized(new { message = "User not found. Please authenticate with Discord first." });
+            food.Infected = true;
+            infectedCount++;
+        }
 
         return Ok(new
         {

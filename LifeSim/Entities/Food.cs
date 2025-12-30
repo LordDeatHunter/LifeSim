@@ -27,6 +27,11 @@ public class Food : Entity
     public override void Update(float deltaTime)
     {
         Age += deltaTime;
+        if (Infected)
+        {
+            Age += deltaTime * 2F;
+            TryInfectNearbyEntities(deltaTime);
+        }
     }
 
     public override void MarkForDeletion()

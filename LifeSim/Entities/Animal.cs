@@ -40,7 +40,7 @@ public class Animal : Entity
         get => _predationInclination;
         set => _predationInclination = float.Clamp(value, 0F, 1F);
     }
-    
+
     private readonly float _defaultSpeed;
     private float DefaultSpeed
     {
@@ -58,7 +58,8 @@ public class Animal : Entity
     public float Saturation
     {
         get => _currentSaturation;
-        set {
+        set
+        {
             _currentSaturation = float.Min(DefaultMaxSat, value);
             if (_currentSaturation <= 0F) DeathAge = Age;
         }
@@ -75,7 +76,8 @@ public class Animal : Entity
     public float HungerRate { get; }
 
     private float _age;
-    public float Age {
+    public float Age
+    {
         get => _age;
         set
         {
@@ -95,6 +97,7 @@ public class Animal : Entity
             _deathColor = Color;
         }
     }
+
     private Color _deathColor;
     public bool Dead => DeathAge >= 0F;
     public float RotAmount => Dead ? MathF.Max(0F, Age - DeathAge) / CorpseLifespan : 0F;
@@ -113,7 +116,11 @@ public class Animal : Entity
     public float Health
     {
         get => _health;
-        private set => _health = float.Clamp(value, 0F, MaxHealth);
+        private set
+        {
+            _health = float.Clamp(value, 0F, MaxHealth);
+            if (_health <= 0F) DeathAge = Age;
+        }
     }
 
 
@@ -150,6 +157,12 @@ public class Animal : Entity
 
         Age += deltaTime;
 
+        if (Infected)
+        {
+            Health -= 2.0F * deltaTime;
+            TryInfectNearbyEntities(deltaTime);
+        }
+
         if (Dead)
         {
             if (Age >= DeathAge + CorpseLifespan)
@@ -160,7 +173,7 @@ public class Animal : Entity
 
             var t = float.Clamp(RotAmount, 0f, 1f);
             var gray = _deathColor.ToGrayscale();
-            Color  = ColorUtils.Lerp(_deathColor, gray, t);
+            Color = ColorUtils.Lerp(_deathColor, gray, t);
 
             return;
         }
@@ -436,6 +449,7 @@ public class Animal : Entity
                     {
                         animal.Health -= (Size - animal.Size) * 0.5F;
                     }
+
                     continue;
                 }
 
@@ -470,6 +484,7 @@ public class Animal : Entity
 
     public void Consume(Entity entity)
     {
+        if (entity.Infected) Infected = true;
         Saturation += entity.NutritionValue;
         entity.MarkForDeletion();
         if (TargetEntity == entity) TargetEntity = null;

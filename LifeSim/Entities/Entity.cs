@@ -29,6 +29,40 @@ public abstract class Entity(Vector2 position, Color color, float size = 8F)
     }
 
     public abstract IEntityDto ToDTO();
-    
+
     public abstract float NutritionValue { get; }
+
+    protected void TryInfectNearbyEntities(float deltaTime)
+    {
+        const float infectionRadius = 24F;
+        const float infectionChancePerSecond = 0.5f;
+
+        var chunkPosition = Position.ToChunkPosition();
+        for (var dx = -1; dx <= 1; dx++)
+        for (var dy = -1; dy <= 1; dy++)
+        {
+            var newChunkPos = new Vector2(chunkPosition.X + dx, chunkPosition.Y + dy);
+            if (!Program.World.Chunks.TryGetValue(newChunkPos, out var chunk)) continue;
+
+            foreach (var animal in chunk.Animals)
+            {
+                if (animal == this || animal.Infected || animal.MarkedForDeletion) continue;
+                var distance = Vector2.Distance(Position, animal.Position);
+                if (distance > infectionRadius) continue;
+
+                if (RandomUtils.RNG.NextSingle() < infectionChancePerSecond * deltaTime)
+                    animal.Infected = true;
+            }
+
+            foreach (var food in chunk.Food)
+            {
+                if (food.Infected || food.MarkedForDeletion) continue;
+                var distance = Vector2.Distance(Position, food.Position);
+                if (distance > infectionRadius) continue;
+
+                if (RandomUtils.RNG.NextSingle() < infectionChancePerSecond * deltaTime)
+                    food.Infected = true;
+            }
+        }
+    }
 }
