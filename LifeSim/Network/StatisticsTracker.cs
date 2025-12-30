@@ -6,13 +6,15 @@ public class StatisticsTracker
     private readonly List<StatisticsSnapshot> _snapshots = [];
     private readonly TimeSpan _retentionPeriod = TimeSpan.FromMinutes(1);
 
-    public void RecordSnapshot(int animalCount, int foodCount)
+    public void RecordSnapshot(int animalCount, int foodCount, int infectedAnimalCount, int infectedFoodCount)
     {
         var snapshot = new StatisticsSnapshot
         {
             Timestamp = DateTime.UtcNow,
             AnimalCount = animalCount,
-            FoodCount = foodCount
+            FoodCount = foodCount,
+            InfectedAnimalCount = infectedAnimalCount,
+            InfectedFoodCount = infectedFoodCount
         };
 
         lock (_lock)
@@ -40,4 +42,6 @@ public class StatisticsSnapshot
     public DateTime Timestamp { get; init; }
     public int AnimalCount { get; init; }
     public int FoodCount { get; init; }
+    public int InfectedAnimalCount { get; init; }
+    public int InfectedFoodCount { get; init; }
 }

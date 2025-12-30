@@ -20,7 +20,10 @@ public class BroadcastLoop(IHubContext<GameHub> hubContext, WorldStorage world, 
             var currentAnimals = world.GetAnimalDtos();
             var currentFoods = world.GetFoodDtos();
 
-            statisticsTracker.RecordSnapshot(currentAnimals.Count, currentFoods.Count);
+            var infectedAnimalCount = currentAnimals.Count(a => a.Value.infected);
+            var infectedFoodCount = currentFoods.Count(f => f.Value.infected);
+
+            statisticsTracker.RecordSnapshot(currentAnimals.Count, currentFoods.Count, infectedAnimalCount, infectedFoodCount);
 
             var addedAnimals = new Dictionary<string, AnimalDto>();
             foreach (var kvp in currentAnimals.Where(kvp => !previousAnimals.ContainsKey(kvp.Key)))
