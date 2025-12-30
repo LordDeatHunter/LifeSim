@@ -118,7 +118,7 @@ const getBalance = async () =>
 const setBalanceDisplay = (balance) => {
   maxBalance = balance;
   if (balanceDisplay) {
-    balanceDisplay.textContent = `🪙${maxBalance.toLocaleString()}`;
+    balanceDisplay.textContent = `${maxBalance.toLocaleString()}`;
   } else {
     console.error("Balance display element not found.");
   }
@@ -230,7 +230,7 @@ const updateBet = (id) => {
 };
 
 document.addEventListener("DOMContentLoaded", () => {
-  balanceDisplay = document.getElementById("balance-display");
+  balanceDisplay = document.getElementById("balance-amount");
   betAmountInput = document.getElementById("bet-amount");
   betStatusDiv = document.getElementById("bet-statuses");
   betStatusList = document.getElementById("bet-status-list");

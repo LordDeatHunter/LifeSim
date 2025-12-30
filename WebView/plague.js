@@ -6,6 +6,7 @@ let plagueSizeSlider;
 let plagueSizeLabel;
 let plagueCostDisplay;
 let startPlagueButton;
+let balanceAmountDisplay;
 
 const calculatePlagueCost = (radius) => {
   const area = Math.PI * radius * radius;
@@ -113,7 +114,7 @@ const startPlague = async () => {
       updatePlagueButtonState();
 
       if (balanceAmountDisplay) {
-        balanceAmountDisplay.innerText = data.balance;
+        balanceAmountDisplay.innerText = `${data.balance.toLocaleString()}`;
       }
     }
   } catch (error) {
@@ -126,6 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
   plagueSizeLabel = document.getElementById('plague-size-label');
   plagueCostDisplay = document.getElementById('plague-cost');
   startPlagueButton = document.getElementById('start-plague-button');
+  balanceAmountDisplay = document.getElementById('balance-amount');
 
   if (plagueSizeSlider) {
     plagueSizeSlider.addEventListener('input', (e) => {
@@ -148,4 +150,3 @@ document.addEventListener('DOMContentLoaded', () => {
   updatePlagueCost();
   updatePlagueButtonState();
 });
-
